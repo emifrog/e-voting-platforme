@@ -10,6 +10,53 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.webhooks ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
+-- HELPER FUNCTIONS
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.profiles_sensitive_fields_unchanged(
+  target_id uuid,
+  new_stripe_customer_id text,
+  new_subscription_plan text,
+  new_subscription_status text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  requester_role text := current_setting('request.jwt.claim.role', true);
+  old_stripe_customer_id text;
+  old_subscription_plan text;
+  old_subscription_status text;
+BEGIN
+  IF requester_role = 'service_role' THEN
+    RETURN TRUE;
+  END IF;
+
+  SELECT
+    stripe_customer_id,
+    subscription_plan,
+    subscription_status
+  INTO
+    old_stripe_customer_id,
+    old_subscription_plan,
+    old_subscription_status
+  FROM public.profiles
+  WHERE id = target_id;
+
+  IF NOT FOUND THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN
+    old_stripe_customer_id IS NOT DISTINCT FROM new_stripe_customer_id
+    AND old_subscription_plan IS NOT DISTINCT FROM new_subscription_plan
+    AND old_subscription_status IS NOT DISTINCT FROM new_subscription_status;
+END;
+$$;
+
+-- ============================================
 -- PROFILES POLICIES
 -- ============================================
 
@@ -24,10 +71,12 @@ ON public.profiles FOR UPDATE
 USING (auth.uid() = id)
 WITH CHECK (
   auth.uid() = id
-  -- Cannot directly modify these fields
-  AND stripe_customer_id = OLD.stripe_customer_id
-  AND subscription_plan = OLD.subscription_plan
-  AND subscription_status = OLD.subscription_status
+  AND public.profiles_sensitive_fields_unchanged(
+    id,
+    stripe_customer_id,
+    subscription_plan,
+    subscription_status
+  )
 );
 
 -- ============================================
