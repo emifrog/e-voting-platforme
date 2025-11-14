@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { encryptVote, generateVoteHash } from '@/lib/services/encryption'
 import { castVoteSchema } from '@/lib/validations/vote'
+import { applyRateLimit } from '@/lib/utils/rate-limit-middleware'
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const rateLimitResponse = await applyRateLimit(request, 'vote')
+  if (rateLimitResponse) {
+    return rateLimitResponse
+  }
+
   try {
     const body = await request.json()
 

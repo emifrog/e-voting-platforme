@@ -42,3 +42,42 @@ export interface ElectionResults {
     quorum_reached: boolean
   }
 }
+
+// Types pour l'export
+export interface CandidateResult {
+  id: string
+  name: string
+  description?: string | null
+  votes: number
+  percentage: number
+  isWinner: boolean
+  isTied: boolean
+}
+
+export interface QuorumInfo {
+  type: 'percentage' | 'absolute' | 'weighted'
+  required: number
+  reached: boolean
+}
+
+export interface ExportElectionResults {
+  election: {
+    id: string
+    title: string
+    description?: string | null
+    vote_type: VoteType
+    status: ElectionStatus
+    start_date: string
+    end_date: string
+    created_at: string
+  }
+  candidates: CandidateResult[]
+  stats: {
+    totalVoters: number
+    totalVotes: number
+    participationRate: number
+    abstentions?: number
+    blanks?: number
+    quorum?: QuorumInfo
+  }
+}
