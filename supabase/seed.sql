@@ -1,0 +1,32 @@
+-- Seed data for development/testing
+
+-- Note: This assumes you have a test user with ID 'test-user-uuid'
+-- In development, create a user via Supabase Auth first
+
+-- Insert a test profile
+-- INSERT INTO public.profiles (id, email, full_name, subscription_plan)
+-- VALUES (
+--   'test-user-uuid',
+--   'test@example.com',
+--   'Test User',
+--   'pro'
+-- );
+
+-- Insert a test election
+-- INSERT INTO public.elections (
+--   creator_id,
+--   title,
+--   description,
+--   vote_type,
+--   status,
+--   start_date,
+--   end_date
+-- ) VALUES (
+--   'test-user-uuid',
+--   'Test Election',
+--   'This is a test election',
+--   'simple',
+--   'draft',
+--   NOW() + INTERVAL '1 day',
+--   NOW() + INTERVAL '7 days'
+-- );
