@@ -26,7 +26,7 @@ export async function checkRateLimitForAction(type: 'login' | '2fa'): Promise<{
     return {
       limited: !result.success,
       remaining: result.remaining,
-      reset: result.reset,
+      reset: result.reset ? new Date(result.reset) : undefined,
     }
   } catch (error) {
     console.error('Rate limit check error:', error)

@@ -43,7 +43,7 @@ export async function createProxy(formData: ProxyFormData) {
     // Vérifier que les deux électeurs existent
     const { data: donorVoter, error: donorError } = await supabase
       .from('voters')
-      .select('id, email, name')
+      .select('id, email, name, has_voted')
       .eq('election_id', electionId)
       .eq('email', donorEmail)
       .single()
@@ -54,7 +54,7 @@ export async function createProxy(formData: ProxyFormData) {
 
     const { data: proxyVoter, error: proxyError } = await supabase
       .from('voters')
-      .select('id, email, name')
+      .select('id, email, name, has_voted')
       .eq('election_id', electionId)
       .eq('email', proxyEmail)
       .single()

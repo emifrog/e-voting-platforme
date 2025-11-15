@@ -140,7 +140,7 @@ export async function getUserSubscription() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_plan, subscription_status, subscription_end_date, trial_ends_at, elections_limit, voters_per_election_limit')
+      .select('stripe_customer_id, subscription_plan, subscription_status, subscription_end_date, trial_ends_at, elections_limit, voters_per_election_limit')
       .eq('id', user.id)
       .single()
 

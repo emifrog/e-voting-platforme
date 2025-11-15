@@ -1,5 +1,12 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+
+const WEBHOOKS_TABLE = 'webhooks' as const
+type WebhookTable = Database['public']['Tables'][typeof WEBHOOKS_TABLE]
+type WebhookRow = WebhookTable['Row']
+type WebhookUpdate = WebhookTable['Update']
 
 export type WebhookEvent =
   | 'election.created'
@@ -38,11 +45,11 @@ export async function dispatchWebhookEvent(
   electionId?: string
 ): Promise<void> {
   try {
-    const supabase = createAdminClient()
+    const supabase: SupabaseClient<Database> = createAdminClient()
+    const webhooksTable = supabase.from(WEBHOOKS_TABLE) as any
 
     // Récupérer les webhooks actifs de l'utilisateur abonnés à cet événement
-    const { data: webhooks, error } = await supabase
-      .from('webhooks')
+    const { data: webhooks, error } = await webhooksTable
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
@@ -51,6 +58,8 @@ export async function dispatchWebhookEvent(
     if (error || !webhooks || webhooks.length === 0) {
       return
     }
+
+    const typedWebhooks = webhooks as WebhookRow[]
 
     // Créer le payload
     const payload: WebhookPayload = {
@@ -64,7 +73,7 @@ export async function dispatchWebhookEvent(
     const payloadString = JSON.stringify(payload)
 
     // Envoyer à chaque webhook
-    const promises = webhooks.map(async (webhook) => {
+    const promises = typedWebhooks.map(async (webhook) => {
       try {
         // Générer la signature si un secret est configuré
         const headers: HeadersInit = {
@@ -89,22 +98,24 @@ export async function dispatchWebhookEvent(
 
         // Mettre à jour les statistiques
         if (response.ok) {
-          await supabase
-            .from('webhooks')
-            .update({
-              success_count: webhook.success_count + 1,
-              last_triggered_at: new Date().toISOString(),
-            })
+          const successUpdate: WebhookUpdate = {
+            success_count: webhook.success_count + 1,
+            last_triggered_at: new Date().toISOString(),
+          }
+
+          await webhooksTable
+            .update(successUpdate)
             .eq('id', webhook.id)
 
           console.log(`✅ Webhook ${webhook.name} envoyé avec succès`)
         } else {
-          await supabase
-            .from('webhooks')
-            .update({
-              failure_count: webhook.failure_count + 1,
-              last_triggered_at: new Date().toISOString(),
-            })
+          const failureUpdate: WebhookUpdate = {
+            failure_count: webhook.failure_count + 1,
+            last_triggered_at: new Date().toISOString(),
+          }
+
+          await webhooksTable
+            .update(failureUpdate)
             .eq('id', webhook.id)
 
           console.error(
@@ -113,12 +124,13 @@ export async function dispatchWebhookEvent(
         }
       } catch (error) {
         // Incrémenter le compteur d'échecs
-        await supabase
-          .from('webhooks')
-          .update({
-            failure_count: webhook.failure_count + 1,
-            last_triggered_at: new Date().toISOString(),
-          })
+        const failureUpdate: WebhookUpdate = {
+          failure_count: webhook.failure_count + 1,
+          last_triggered_at: new Date().toISOString(),
+        }
+
+        await webhooksTable
+          .update(failureUpdate)
           .eq('id', webhook.id)
 
         console.error(`❌ Erreur envoi webhook ${webhook.name}:`, error)
@@ -153,6 +165,8 @@ export async function testWebhook(webhookId: string): Promise<{
       return { success: false, error: 'Webhook non trouvé' }
     }
 
+    const webhookRecord = webhook as WebhookRow
+
     // Créer un payload de test
     const testPayload: WebhookPayload = {
       event: 'election.created',
@@ -162,7 +176,7 @@ export async function testWebhook(webhookId: string): Promise<{
         webhookId,
       },
       timestamp: new Date().toISOString(),
-      userId: webhook.user_id,
+      userId: webhookRecord.user_id,
     }
 
     const payloadString = JSON.stringify(testPayload)
@@ -176,13 +190,13 @@ export async function testWebhook(webhookId: string): Promise<{
       'X-Webhook-Test': 'true',
     }
 
-    if (webhook.secret) {
-      const signature = generateSignature(payloadString, webhook.secret)
+    if (webhookRecord.secret) {
+      const signature = generateSignature(payloadString, webhookRecord.secret)
       headers['X-Webhook-Signature'] = signature
     }
 
     // Envoyer la requête
-    const response = await fetch(webhook.url, {
+    const response = await fetch(webhookRecord.url, {
       method: 'POST',
       headers,
       body: payloadString,
