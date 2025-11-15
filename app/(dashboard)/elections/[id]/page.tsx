@@ -9,8 +9,9 @@ import { CandidateList } from '@/components/elections/candidate-list'
 export default async function ElectionDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const supabase = await createClient()
   const {
     data: { user },
@@ -26,7 +27,7 @@ export default async function ElectionDetailPage({
       candidates(*),
       voters(*)
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('creator_id', user.id)
     .single()
 

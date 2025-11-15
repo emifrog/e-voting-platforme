@@ -14,7 +14,7 @@ export default function LoginPage() {
           Connectez-vous à votre compte
         </CardDescription>
       </CardHeader>
-      <form action={login}>
+      <form action={login as any}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

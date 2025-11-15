@@ -11,8 +11,9 @@ import { sendInvitations } from '@/lib/actions/voters'
 export default async function VotersPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const supabase = await createClient()
   const {
     data: { user },
@@ -24,7 +25,7 @@ export default async function VotersPage({
   const { data: election, error } = await supabase
     .from('elections')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('creator_id', user.id)
     .single()
 
@@ -36,7 +37,7 @@ export default async function VotersPage({
   const { data: voters } = await supabase
     .from('voters')
     .select('*')
-    .eq('election_id', params.id)
+    .eq('election_id', id)
     .order('created_at', { ascending: false })
 
   const votersData = voters || []
@@ -45,7 +46,7 @@ export default async function VotersPage({
 
   const handleSendInvitations = async () => {
     'use server'
-    const result = await sendInvitations(params.id)
+    const result = await sendInvitations(id)
     if (result.error) {
       // Handle error
       return
@@ -58,7 +59,7 @@ export default async function VotersPage({
       <div className="flex items-start justify-between">
         <div>
           <Link
-            href={`/elections/${params.id}`}
+            href={`/elections/${id}`}
             className="text-sm text-primary hover:underline mb-2 inline-block"
           >
             ← Retour à l'élection
@@ -137,7 +138,7 @@ export default async function VotersPage({
             <AddVoterDialog electionId={election.id} />
             <ImportVotersDialog electionId={election.id} />
             {votersData.length > 0 && invitedCount < votersData.length && (
-              <form action={handleSendInvitations}>
+              <form action={handleSendInvitations as any}>
                 <Button type="submit" variant="outline">
                   Envoyer les invitations ({votersData.length - invitedCount})
                 </Button>

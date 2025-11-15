@@ -20,7 +20,7 @@ export function AddVoterDialog({ electionId }: AddVoterDialogProps) {
     const result = await addVoter(electionId, formData)
 
     if (result?.error) {
-      alert(result.error.message || 'Erreur lors de l\'ajout')
+      alert((result.error as any).message || 'Erreur lors de l\'ajout')
     } else {
       setIsOpen(false)
     }

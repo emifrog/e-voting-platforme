@@ -6,8 +6,9 @@ import { VoteInterface } from '@/components/vote/vote-interface'
 export default async function VotePage({
   params,
 }: {
-  params: { token: string }
+  params: Promise<{ token: string }>
 }) {
+  const { token } = await params
   const supabase = createAdminClient()
 
   // Get voter and election info
@@ -20,18 +21,18 @@ export default async function VotePage({
         candidates(*)
       )
     `)
-    .eq('token', params.token)
+    .eq('token', token)
     .single()
 
   if (error || !voter) {
     notFound()
   }
 
-  const election = (voter.elections as any)
-  const candidates = (election.candidates as any) || []
+  const election = (voter as any).elections as any
+  const candidates = (election?.candidates as any) || []
 
   // Check if already voted
-  if (voter.has_voted) {
+  if ((voter as any).has_voted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-2xl">
@@ -44,8 +45,7 @@ export default async function VotePage({
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-muted-foreground">
-              Votre vote a été enregistré le{' '}
-              {new Date(voter.voted_at).toLocaleString('fr-FR')}
+              Voté le {new Date((voter as any).voted_at).toLocaleString('fr-FR')}
             </p>
           </CardContent>
         </Card>
@@ -101,7 +101,7 @@ export default async function VotePage({
             <p className="text-muted-foreground">{election.description}</p>
           )}
           <div className="mt-4 flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span>📧 {voter.email}</span>
+            <span>📧 {(voter as any).email}</span>
             <span>•</span>
             <span>
               🕐 Jusqu'au {new Date(election.end_date).toLocaleString('fr-FR')}
@@ -110,10 +110,10 @@ export default async function VotePage({
         </div>
 
         <VoteInterface
-          token={params.token}
+          token={token}
           election={election}
           candidates={candidates}
-          voterName={voter.name || voter.email}
+          voterName={(voter as any).name || (voter as any).email}
         />
       </div>
     </div>

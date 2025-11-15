@@ -21,7 +21,7 @@ export function generateTOTPSecret(userEmail: string): {
     algorithm: 'SHA1',
     digits: 6,
     period: 30,
-    secret: OTPAuth.Secret.fromRandom(20),
+    secret: new OTPAuth.Secret({ size: 20 }),
   })
 
   return {

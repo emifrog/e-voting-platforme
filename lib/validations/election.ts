@@ -39,7 +39,22 @@ export const createElectionSchema = z.object({
   }
 )
 
-export const updateElectionSchema = createElectionSchema.partial()
+export const updateElectionSchema = z.object({
+  title: z.string().min(3).max(500).optional(),
+  description: z.string().max(5000).optional(),
+  voteType: z.enum(['simple', 'approval', 'ranked', 'list']).optional(),
+  isSecret: z.boolean().optional(),
+  isWeighted: z.boolean().optional(),
+  allowAbstention: z.boolean().optional(),
+  quorumType: z.enum(['none', 'percentage', 'absolute', 'weighted']).optional(),
+  quorumValue: z.number().min(0).max(100).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  meetingPlatform: z.enum(['teams', 'zoom', 'custom']).optional(),
+  meetingUrl: z.string().url().optional().or(z.literal('')),
+  meetingPassword: z.string().optional(),
+  resultsVisible: z.boolean().optional(),
+}).partial()
 
 export const addCandidateSchema = z.object({
   name: z

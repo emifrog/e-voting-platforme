@@ -14,7 +14,7 @@ export default function RegisterPage() {
           Inscrivez-vous pour commencer à créer vos votes
         </CardDescription>
       </CardHeader>
-      <form action={register}>
+      <form action={register as any}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Nom complet</Label>

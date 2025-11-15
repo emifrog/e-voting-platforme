@@ -8,8 +8,9 @@ import { ResultsWrapper } from '@/components/results/results-wrapper'
 export default async function ResultsPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const supabase = await createClient()
   const {
     data: { user },
@@ -21,7 +22,7 @@ export default async function ResultsPage({
   const { data: election, error } = await supabase
     .from('elections')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('creator_id', user.id)
     .single()
 
@@ -30,7 +31,7 @@ export default async function ResultsPage({
   }
 
   // Calculate results
-  const results = await calculateResults(params.id)
+  const results = await calculateResults(id)
 
   if (!results) {
     return (
@@ -50,7 +51,7 @@ export default async function ResultsPage({
       <div className="flex items-start justify-between">
         <div>
           <Link
-            href={`/elections/${params.id}`}
+            href={`/elections/${id}`}
             className="text-sm text-primary hover:underline mb-2 inline-block"
           >
             ← Retour à l'élection

@@ -41,12 +41,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already voted
-    if (voter.has_voted) {
+    if ((voter as any).has_voted) {
       return NextResponse.json({ error: 'Vous avez déjà voté' }, { status: 400 })
     }
 
     // Check if election is active
-    if ((voter.elections as any).status !== 'active') {
+    if ((voter as any).elections.status !== 'active') {
       return NextResponse.json(
         { error: 'Le vote n\'est pas encore ouvert ou est déjà terminé' },
         { status: 400 }
@@ -61,19 +61,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Encrypt vote
-    const encrypted = encryptVote(voteData, voter.election_id)
+    const encrypted = encryptVote(voteData, (voter as any).election_id)
 
     // Generate verification hash
     const voteHash = generateVoteHash(voteData)
 
     // Get IP and user agent
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = (request as any).ip || request.headers.get('x-forwarded-for') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     // Cast vote atomically using the stored procedure
-    const { error: voteError } = await supabase.rpc('cast_vote_atomic', {
-      p_election_id: voter.election_id,
-      p_voter_id: voter.id,
+    const { error: voteError } = await (supabase as any).rpc('cast_vote_atomic', {
+      p_election_id: (voter as any).election_id,
+      p_voter_id: (voter as any).id,
       p_encrypted_vote: encrypted.encrypted,
       p_vote_hash: voteHash,
       p_iv: encrypted.iv,

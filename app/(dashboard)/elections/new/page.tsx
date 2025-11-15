@@ -14,7 +14,7 @@ export default function NewElectionPage() {
         </p>
       </div>
 
-      <form action={createElection}>
+      <form action={createElection as any}>
         <div className="space-y-6">
           {/* Basic Information */}
           <Card>

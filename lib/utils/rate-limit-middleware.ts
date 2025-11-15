@@ -25,7 +25,7 @@ export function getRateLimitIdentifier(request: NextRequest): string {
     cfConnectingIp ||
     realIp ||
     forwardedFor?.split(',')[0] ||
-    request.ip ||
+    (request as any).ip ||
     'unknown'
   )
 }

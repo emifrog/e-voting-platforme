@@ -40,13 +40,19 @@ export async function calculateResults(electionId: string): Promise<ElectionResu
     return null
   }
 
+  // Cast to any to avoid TypeScript issues
+  const candidatesData = candidates as any[]
+  const votesData = votes as any[]
+  const votersData = voters as any[]
+  const electionData = election as any
+
   // Decrypt and count votes
   const voteCounts: Record<string, number> = {}
-  candidates.forEach((c) => {
+  candidatesData.forEach((c: any) => {
     voteCounts[c.id] = 0
   })
 
-  for (const vote of votes) {
+  for (const vote of votesData) {
     try {
       const decrypted = decryptVote(
         vote.encrypted_vote,
@@ -56,13 +62,13 @@ export async function calculateResults(electionId: string): Promise<ElectionResu
       )
 
       // Count votes based on vote type
-      if (election.vote_type === 'simple' || election.vote_type === 'approval') {
+      if (electionData.vote_type === 'simple' || electionData.vote_type === 'approval') {
         decrypted.candidate_ids?.forEach((candidateId: string) => {
           if (voteCounts[candidateId] !== undefined) {
             voteCounts[candidateId]++
           }
         })
-      } else if (election.vote_type === 'ranked') {
+      } else if (electionData.vote_type === 'ranked') {
         // For ranked voting, give points based on ranking
         // First choice: 3 points, Second: 2 points, Third: 1 point
         const rankings = decrypted.rankings || {}
@@ -79,11 +85,11 @@ export async function calculateResults(electionId: string): Promise<ElectionResu
   }
 
   // Calculate percentages and determine winner
-  const totalVotes = votes.length
+  const totalVotes = votesData.length
   let maxVotes = 0
   let winnerId: string | null = null
 
-  const results = candidates.map((candidate) => {
+  const results = candidatesData.map((candidate) => {
     const voteCount = voteCounts[candidate.id] || 0
     const percentage = totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0
 
@@ -106,16 +112,16 @@ export async function calculateResults(electionId: string): Promise<ElectionResu
   })
 
   // Calculate participation stats
-  const totalVoters = voters.length
-  const votedCount = voters.filter((v) => v.has_voted).length
+  const totalVoters = votersData.length
+  const votedCount = votersData.filter((v) => v.has_voted).length
   const participationRate = totalVoters > 0 ? (votedCount / totalVoters) * 100 : 0
 
   // Check quorum
   let quorumReached = false
-  if (election.quorum_type === 'percentage') {
-    quorumReached = participationRate >= (election.quorum_value || 0)
-  } else if (election.quorum_type === 'absolute') {
-    quorumReached = votedCount >= (election.quorum_value || 0)
+  if (electionData.quorum_type === 'percentage') {
+    quorumReached = participationRate >= (electionData.quorum_value || 0)
+  } else if (electionData.quorum_type === 'absolute') {
+    quorumReached = votedCount >= (electionData.quorum_value || 0)
   } else {
     quorumReached = true // No quorum or 'none' type
   }
