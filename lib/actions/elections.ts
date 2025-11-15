@@ -12,7 +12,7 @@ export async function createElection(formData: FormData) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: { message: 'Non authentifié' } }
+    redirect('/login?error=' + encodeURIComponent('Vous devez être connecté'))
   }
 
   // Parse and validate form data
@@ -34,9 +34,9 @@ export async function createElection(formData: FormData) {
   })
 
   if (!validatedFields.success) {
-    return {
-      error: validatedFields.error.flatten().fieldErrors,
-    }
+    const errors = validatedFields.error.flatten().fieldErrors
+    const errorMsg = Object.values(errors).flat().join(', ')
+    redirect(`/elections/new?error=${encodeURIComponent(errorMsg)}`)
   }
 
   const data = validatedFields.data
@@ -67,7 +67,7 @@ export async function createElection(formData: FormData) {
 
   if (error) {
     console.error('Error creating election:', error)
-    return { error: { message: 'Erreur lors de la création de l\'élection' } }
+    redirect(`/elections/new?error=${encodeURIComponent('Erreur lors de la création de l\'élection')}`)
   }
 
   revalidatePath('/elections')

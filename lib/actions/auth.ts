@@ -15,9 +15,9 @@ export async function login(formData: FormData) {
   })
 
   if (!validatedFields.success) {
-    return {
-      error: validatedFields.error.flatten().fieldErrors,
-    }
+    const errors = validatedFields.error.flatten().fieldErrors
+    const errorMsg = Object.values(errors).flat().join(', ')
+    redirect(`/login?error=${encodeURIComponent(errorMsg)}`)
   }
 
   const { email, password } = validatedFields.data
@@ -28,9 +28,7 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    return {
-      error: { message: 'Email ou mot de passe incorrect' },
-    }
+    redirect(`/login?error=${encodeURIComponent('Email ou mot de passe incorrect')}`)
   }
 
   revalidatePath('/', 'layout')
@@ -49,9 +47,9 @@ export async function register(formData: FormData) {
   })
 
   if (!validatedFields.success) {
-    return {
-      error: validatedFields.error.flatten().fieldErrors,
-    }
+    const errors = validatedFields.error.flatten().fieldErrors
+    const errorMsg = Object.values(errors).flat().join(', ')
+    redirect(`/register?error=${encodeURIComponent(errorMsg)}`)
   }
 
   const { email, password, fullName } = validatedFields.data
@@ -67,9 +65,7 @@ export async function register(formData: FormData) {
   })
 
   if (error) {
-    return {
-      error: { message: error.message },
-    }
+    redirect(`/register?error=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/', 'layout')

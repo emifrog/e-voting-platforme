@@ -5,7 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { login } from '@/lib/actions/auth'
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const params = await searchParams
+  const error = params.error
   return (
     <Card>
       <CardHeader className="space-y-1">
@@ -14,8 +20,13 @@ export default function LoginPage() {
           Connectez-vous à votre compte
         </CardDescription>
       </CardHeader>
-      <form action={login as any}>
+      <form action={login}>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

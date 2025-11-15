@@ -5,7 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { register } from '@/lib/actions/auth'
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const params = await searchParams
+  const error = params.error
   return (
     <Card>
       <CardHeader className="space-y-1">
@@ -14,8 +20,13 @@ export default function RegisterPage() {
           Inscrivez-vous pour commencer à créer vos votes
         </CardDescription>
       </CardHeader>
-      <form action={register as any}>
+      <form action={register}>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="fullName">Nom complet</Label>
             <Input

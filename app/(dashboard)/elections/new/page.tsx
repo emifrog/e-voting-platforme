@@ -4,7 +4,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { createElection } from '@/lib/actions/elections'
 
-export default function NewElectionPage() {
+export default async function NewElectionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const params = await searchParams
+  const error = params.error
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
@@ -14,8 +20,13 @@ export default function NewElectionPage() {
         </p>
       </div>
 
-      <form action={createElection as any}>
+      <form action={createElection}>
         <div className="space-y-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>
+            </div>
+          )}
           {/* Basic Information */}
           <Card>
             <CardHeader>
