@@ -207,3 +207,131 @@ export async function sendVotingReminder({
     html,
   })
 }
+
+/**
+ * Envoyer un email de demande de procuration
+ */
+export async function sendProxyRequestEmail({
+  to,
+  proxyName,
+  donorName,
+  electionTitle,
+}: {
+  to: string
+  proxyName: string
+  donorName: string
+  electionTitle: string
+}) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">🗳️ Demande de Procuration</h1>
+        </div>
+
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+          <p style="font-size: 16px; margin-bottom: 20px;">
+            Bonjour <strong>${proxyName}</strong>,
+          </p>
+
+          <p style="margin-bottom: 20px;">
+            <strong>${donorName}</strong> vous a désigné(e) comme mandataire pour voter en son nom à l'élection :
+          </p>
+
+          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
+            <h2 style="margin: 0 0 10px 0; color: #667eea; font-size: 18px;">${electionTitle}</h2>
+          </div>
+
+          <p style="margin-bottom: 20px;">
+            L'administrateur de l'élection doit valider cette procuration avant que vous puissiez voter au nom du mandant.
+          </p>
+
+          <p style="margin-bottom: 20px;">
+            Vous recevrez un email de confirmation une fois la procuration validée.
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+          <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Cet email a été envoyé automatiquement depuis la plateforme E-Voting. Si vous n'attendiez pas cette procuration, veuillez contacter l'administrateur de l'élection.
+          </p>
+        </div>
+      </body>
+    </html>
+  `
+
+  return sendEmail({
+    to,
+    subject: `Procuration - ${electionTitle}`,
+    html,
+  })
+}
+
+/**
+ * Envoyer un email de confirmation de procuration
+ */
+export async function sendProxyConfirmationEmail({
+  to,
+  donorName,
+  electionTitle,
+}: {
+  to: string
+  donorName: string
+  electionTitle: string
+}) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">✅ Procuration Validée</h1>
+        </div>
+
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+          <p style="font-size: 16px; margin-bottom: 20px;">
+            Bonjour,
+          </p>
+
+          <p style="margin-bottom: 20px;">
+            La procuration de <strong>${donorName}</strong> pour l'élection suivante a été validée :
+          </p>
+
+          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; margin: 20px 0;">
+            <h2 style="margin: 0 0 10px 0; color: #10b981; font-size: 18px;">${electionTitle}</h2>
+          </div>
+
+          <p style="margin-bottom: 20px;">
+            Vous pourrez maintenant voter en votre nom ET au nom de ${donorName} lorsque vous recevrez le lien de vote.
+          </p>
+
+          <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 14px; color: #1e40af;">
+              💡 <strong>Important :</strong> Vous devrez voter deux fois : une fois pour vous-même, et une fois avec la procuration.
+            </p>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+          <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Cet email a été envoyé automatiquement depuis la plateforme E-Voting.
+          </p>
+        </div>
+      </body>
+    </html>
+  `
+
+  return sendEmail({
+    to,
+    subject: `Procuration validée - ${electionTitle}`,
+    html,
+  })
+}

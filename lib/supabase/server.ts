@@ -31,3 +31,6 @@ export async function createClient() {
     }
   }
 }
+
+// Alias pour cohérence avec les anciens imports
+export { createClient as createServerClient }

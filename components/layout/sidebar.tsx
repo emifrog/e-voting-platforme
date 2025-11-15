@@ -21,7 +21,7 @@ export default function Sidebar({ profile }: SidebarProps) {
 
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
+      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4 dark:border-gray-800 dark:bg-gray-950">
         <div className="flex h-16 shrink-0 items-center">
           <h1 className="text-xl font-bold text-primary">E-Voting</h1>
         </div>
@@ -37,8 +37,8 @@ export default function Sidebar({ profile }: SidebarProps) {
                         href={item.href}
                         className={cn(
                           isActive
-                            ? 'bg-gray-50 text-primary'
-                            : 'text-gray-700 hover:text-primary hover:bg-gray-50',
+                            ? 'bg-gray-50 text-primary dark:bg-gray-900'
+                            : 'text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900',
                           'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
                         )}
                       >
@@ -51,9 +51,9 @@ export default function Sidebar({ profile }: SidebarProps) {
               </ul>
             </li>
             <li className="mt-auto">
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-xs font-medium text-gray-600">Plan actuel</p>
-                <p className="mt-1 text-sm font-semibold capitalize">
+              <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Plan actuel</p>
+                <p className="mt-1 text-sm font-semibold capitalize dark:text-gray-200">
                   {profile?.subscription_plan || 'Free'}
                 </p>
                 {profile?.subscription_plan === 'free' && (
