@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { prepare2FAActivation, verifyTOTP, verifyBackupCode } from '@/lib/services/two-factor'
 import { redirect } from 'next/navigation'
+import { checkRateLimitForAction } from '@/lib/utils/server-action-rate-limit'
 
 /**
  * Initialise le processus d'activation du 2FA
@@ -64,6 +65,12 @@ export async function enable2FA(
   success?: boolean
   error?: { message: string }
 }> {
+  // Rate limiting protection against brute force
+  const rateLimit = await checkRateLimitForAction('2fa')
+  if (rateLimit.limited) {
+    return { error: { message: 'Trop de tentatives. Veuillez réessayer plus tard.' } }
+  }
+
   const supabase = await createClient()
 
   const {
@@ -116,6 +123,12 @@ export async function disable2FA(
   success?: boolean
   error?: { message: string }
 }> {
+  // Rate limiting protection against brute force
+  const rateLimit = await checkRateLimitForAction('2fa')
+  if (rateLimit.limited) {
+    return { error: { message: 'Trop de tentatives. Veuillez réessayer plus tard.' } }
+  }
+
   const supabase = await createClient()
 
   const {

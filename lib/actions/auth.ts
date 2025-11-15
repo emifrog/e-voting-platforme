@@ -4,8 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { loginSchema, registerSchema } from '@/lib/validations/auth'
+import { checkRateLimitForAction } from '@/lib/utils/server-action-rate-limit'
 
 export async function login(formData: FormData) {
+  // Rate limiting protection against brute force
+  const rateLimit = await checkRateLimitForAction('login')
+  if (rateLimit.limited) {
+    redirect(`/login?error=${encodeURIComponent('Trop de tentatives. Veuillez réessayer plus tard.')}`)
+  }
+
   const supabase = await createClient()
 
   // Validate input
