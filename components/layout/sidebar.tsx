@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { UserAvatar } from '@/components/user/user-avatar'
+import { Badge } from '@/components/ui/badge'
 import type { Profile } from '@/types/models'
 
 interface SidebarProps {
@@ -10,10 +12,16 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-  { name: 'Élections', href: '/elections', icon: '🗳️' },
-  { name: 'Sécurité', href: '/settings/security', icon: '🔐' },
-  { name: 'Paramètres', href: '/settings', icon: '⚙️' },
+  { name: 'Dashboard', href: '/dashboard', icon: '📊', description: 'Vue d\'ensemble' },
+  { name: 'Élections', href: '/elections', icon: '🗳️', description: 'Gérer les élections' },
+  { name: 'Calendrier', href: '/calendar', icon: '📅', description: 'Vue calendrier', badge: 'Nouveau' },
+  { name: 'Sécurité', href: '/settings/security', icon: '🔐', description: 'Authentification 2FA' },
+  { name: 'Paramètres', href: '/settings', icon: '⚙️', description: 'Configuration' },
+]
+
+const quickActions = [
+  { name: 'Nouvelle élection', href: '/elections/new', icon: '➕' },
+  { name: 'Aide & Support', href: '/help', icon: '❓' },
 ]
 
 export default function Sidebar({ profile }: SidebarProps) {
@@ -22,46 +30,111 @@ export default function Sidebar({ profile }: SidebarProps) {
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
       <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4 dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex h-16 shrink-0 items-center">
-          <h1 className="text-xl font-bold text-primary">E-Voting</h1>
+        {/* Logo / Header */}
+        <div className="flex h-16 shrink-0 items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold">
+              E
+            </div>
+            <h1 className="text-xl font-bold text-primary">E-Voting</h1>
+          </Link>
         </div>
+
+        {/* User Profile */}
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+          <UserAvatar size="md" showName />
+        </div>
+
         <nav className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
+            {/* Main Navigation */}
             <li>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Navigation
+              </p>
               <ul role="list" className="-mx-2 space-y-1">
                 {navigation.map((item) => {
-                  const isActive = pathname.startsWith(item.href)
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                   return (
                     <li key={item.name}>
                       <Link
                         href={item.href}
                         className={cn(
                           isActive
-                            ? 'bg-gray-50 text-primary dark:bg-gray-900'
+                            ? 'bg-primary/10 text-primary dark:bg-primary/20'
                             : 'text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900',
-                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                          'group flex items-center justify-between gap-x-3 rounded-lg p-3 text-sm leading-6 font-semibold transition-all'
                         )}
                       >
-                        <span>{item.icon}</span>
-                        {item.name}
+                        <div className="flex items-center gap-x-3">
+                          <span className="text-xl">{item.icon}</span>
+                          <div className="flex flex-col">
+                            <span>{item.name}</span>
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {item.description}
+                            </span>
+                          </div>
+                        </div>
+                        {item.badge && (
+                          <Badge variant="secondary" className="text-xs">
+                            {item.badge}
+                          </Badge>
+                        )}
                       </Link>
                     </li>
                   )
                 })}
               </ul>
             </li>
+
+            {/* Quick Actions */}
+            <li>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Actions Rapides
+              </p>
+              <ul role="list" className="-mx-2 space-y-1">
+                {quickActions.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className="group flex items-center gap-x-3 rounded-lg p-2 text-sm font-medium text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900 transition-all"
+                    >
+                      <span>{item.icon}</span>
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+
+            {/* Subscription Info */}
             <li className="mt-auto">
-              <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Plan actuel</p>
-                <p className="mt-1 text-sm font-semibold capitalize dark:text-gray-200">
-                  {profile?.subscription_plan || 'Free'}
+              <div className="rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 p-4 border border-primary/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-muted-foreground">Plan actuel</p>
+                  <Badge variant={profile?.subscription_plan === 'pro' ? 'default' : 'secondary'}>
+                    {profile?.subscription_plan === 'pro' ? '⭐ Pro' : 'Free'}
+                  </Badge>
+                </div>
+                <p className="text-sm font-semibold capitalize dark:text-gray-200 mb-3">
+                  {profile?.subscription_plan === 'pro'
+                    ? 'Accès complet'
+                    : 'Fonctionnalités limitées'}
                 </p>
                 {profile?.subscription_plan === 'free' && (
                   <Link
                     href="/settings/billing"
-                    className="mt-2 block text-xs text-primary hover:underline"
+                    className="flex items-center justify-center w-full px-3 py-2 text-xs font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
                   >
                     Passer à Pro →
+                  </Link>
+                )}
+                {profile?.subscription_plan === 'pro' && (
+                  <Link
+                    href="/settings/billing"
+                    className="block text-xs text-primary hover:underline text-center"
+                  >
+                    Gérer l'abonnement
                   </Link>
                 )}
               </div>
