@@ -190,7 +190,7 @@ export function validateVoterImport(
     } else {
       result.valid.push({
         email: email.trim().toLowerCase(),
-        name: row.name || row.Name || row.nom || row.Nom || null,
+        name: row.name || row.Name || row.nom || row.Nom || undefined,
         weight: weight || 1.0,
       })
     }
