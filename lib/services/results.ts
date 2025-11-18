@@ -24,10 +24,10 @@ export async function calculateResults(electionId: string): Promise<ElectionResu
 
   // Extract related data from single query result
   const election = data
-  const candidatesData = (data.candidates as any[]) || []
-  const votesData = (data.votes as any[]) || []
-  const votersData = (data.voters as any[]) || []
-  const electionData = election as any
+  const electionData = data as any
+  const candidatesData = (electionData.candidates as any[]) || []
+  const votesData = (electionData.votes as any[]) || []
+  const votersData = (electionData.voters as any[]) || []
 
   if (!candidatesData.length) {
     return null
