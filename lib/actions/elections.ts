@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createElectionSchema, addCandidateSchema } from '@/lib/validations/election'
+import { auditLog } from '@/lib/services/audit'
+import { checkRateLimit } from '@/lib/middleware/rate-limiter'
 
 export async function createElection(formData: FormData) {
   const supabase = await createClient()
@@ -13,6 +15,14 @@ export async function createElection(formData: FormData) {
 
   if (!user) {
     redirect('/login?error=' + encodeURIComponent('Vous devez être connecté'))
+  }
+
+  // Rate limiting
+  try {
+    await checkRateLimit('ELECTION_CREATE', user.id)
+  } catch (error) {
+    redirect('/elections/new?error=' + encodeURIComponent('Trop de créations d\'élections. Veuillez patienter.')
+    )
   }
 
   // Parse and validate form data
@@ -67,8 +77,12 @@ export async function createElection(formData: FormData) {
 
   if (error) {
     console.error('Error creating election:', error)
+    await auditLog.logError('ELECTIONS', 'CREATE', 'elections', error.message)
     redirect(`/elections/new?error=${encodeURIComponent('Erreur lors de la création de l\'élection')}`)
   }
+
+  // Audit log
+  await auditLog.createElection(election.id, data.title, election)
 
   revalidatePath('/elections')
   redirect(`/elections/${election.id}`)
@@ -157,8 +171,12 @@ export async function updateElection(formData: FormData) {
 
   if (error) {
     console.error('Error updating election:', error)
+    await auditLog.logError('ELECTIONS', 'UPDATE', 'elections', error.message, { electionId })
     redirect(`/elections/${electionId}/edit?error=${encodeURIComponent('Erreur lors de la mise à jour de l\'élection')}`)
   }
+
+  // Audit log
+  await auditLog.updateElection(electionId, data.title, existingElection, data)
 
   revalidatePath('/elections')
   revalidatePath(`/elections/${electionId}`)
@@ -225,8 +243,12 @@ export async function closeElection(electionId: string) {
 
   if (updateError) {
     console.error('Error closing election:', updateError)
+    await auditLog.logError('ELECTIONS', 'CLOSE', 'elections', updateError.message, { electionId })
     return { error: 'Erreur lors de la fermeture de l\'élection' }
   }
+
+  // Audit log
+  await auditLog.closeElection(electionId, election.title, quorumReached)
 
   revalidatePath('/elections')
   revalidatePath(`/elections/${electionId}`)
@@ -241,29 +263,177 @@ export async function closeElection(electionId: string) {
   }
 }
 
-export async function deleteElection(electionId: string) {
+/**
+ * Soft delete: Archive une élection (récupérable)
+ * Pour toutes les élections avec votes
+ */
+export async function softDeleteElection(electionId: string) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: { message: 'Non authentifié' } }
+    return { success: false, error: 'Non authentifié' }
   }
 
-  const { error } = await supabase
+  // Vérifier que l'élection existe et appartient à l'utilisateur
+  const { data: election, error: fetchError } = await supabase
     .from('elections')
-    .delete()
+    .select('id, title, status, creator_id')
     .eq('id', electionId)
     .eq('creator_id', user.id)
-    .eq('status', 'draft')
+    .single()
 
-  if (error) {
-    return { error: { message: 'Erreur lors de la suppression' } }
+  if (fetchError || !election) {
+    return { success: false, error: 'Élection non trouvée' }
   }
 
+  // Soft delete (marquer comme supprimée)
+  const { error } = await supabase
+    .from('elections')
+    .update({
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', electionId)
+
+  if (error) {
+    console.error('Error soft deleting election:', error)
+    return { success: false, error: 'Erreur lors de la suppression' }
+  }
+
+  // Audit log
+  const { auditLog } = await import('@/lib/services/audit')
+  await auditLog.deleteElection(electionId, election.title, true)
+
   revalidatePath('/elections')
-  redirect('/elections')
+  return { success: true, message: 'Élection archivée avec succès' }
+}
+
+/**
+ * Hard delete: Suppression définitive
+ * Uniquement pour les drafts sans votes
+ */
+export async function hardDeleteElection(electionId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Non authentifié' }
+  }
+
+  // Vérifier que l'élection existe et appartient à l'utilisateur
+  const { data: election, error: fetchError } = await supabase
+    .from('elections')
+    .select('id, title, status, creator_id')
+    .eq('id', electionId)
+    .eq('creator_id', user.id)
+    .single()
+
+  if (fetchError || !election) {
+    return { success: false, error: 'Élection non trouvée' }
+  }
+
+  // Vérifier que c'est un draft
+  if (election.status !== 'draft') {
+    return {
+      success: false,
+      error: 'Seules les élections en brouillon peuvent être supprimées définitivement',
+    }
+  }
+
+  // Vérifier qu'il n'y a aucun vote
+  const { count: voteCount } = await supabase
+    .from('votes')
+    .select('id', { count: 'exact', head: true })
+    .eq('election_id', electionId)
+
+  if (voteCount && voteCount > 0) {
+    return {
+      success: false,
+      error: 'Impossible de supprimer une élection avec des votes',
+    }
+  }
+
+  // Supprimer les candidats
+  await supabase.from('candidates').delete().eq('election_id', electionId)
+
+  // Supprimer les électeurs
+  await supabase.from('voters').delete().eq('election_id', electionId)
+
+  // Supprimer l'élection
+  const { error } = await supabase.from('elections').delete().eq('id', electionId)
+
+  if (error) {
+    console.error('Error hard deleting election:', error)
+    return { success: false, error: 'Erreur lors de la suppression définitive' }
+  }
+
+  // Audit log
+  const { auditLog } = await import('@/lib/services/audit')
+  await auditLog.deleteElection(electionId, election.title, false)
+
+  revalidatePath('/elections')
+  return { success: true, message: 'Élection supprimée définitivement' }
+}
+
+/**
+ * Restaurer une élection archivée (soft deleted)
+ */
+export async function restoreElection(electionId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Non authentifié' }
+  }
+
+  // Vérifier que l'élection existe et appartient à l'utilisateur
+  const { data: election, error: fetchError } = await supabase
+    .from('elections')
+    .select('id, title, creator_id, deleted_at')
+    .eq('id', electionId)
+    .eq('creator_id', user.id)
+    .not('deleted_at', 'is', null)
+    .single()
+
+  if (fetchError || !election) {
+    return { success: false, error: 'Élection archivée non trouvée' }
+  }
+
+  // Restaurer (retirer deleted_at)
+  const { error } = await supabase
+    .from('elections')
+    .update({
+      deleted_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', electionId)
+
+  if (error) {
+    console.error('Error restoring election:', error)
+    return { success: false, error: 'Erreur lors de la restauration' }
+  }
+
+  // Audit log
+  const { auditLog } = await import('@/lib/services/audit')
+  await auditLog.createElection(electionId, election.title, { restored: true })
+
+  revalidatePath('/elections')
+  return { success: true, message: 'Élection restaurée avec succès' }
+}
+
+/**
+ * Ancienne fonction deleteElection (conservée pour compatibilité)
+ * Utilise maintenant hardDelete pour les drafts sans votes
+ */
+export async function deleteElection(electionId: string) {
+  return hardDeleteElection(electionId)
 }
 
 export async function addCandidate(electionId: string, formData: FormData) {

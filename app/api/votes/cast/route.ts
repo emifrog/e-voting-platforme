@@ -3,28 +3,45 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { encryptVote, generateVoteHash } from '@/lib/services/encryption'
 import { castVoteSchema } from '@/lib/validations/vote'
 import { applyRateLimit } from '@/lib/utils/rate-limit-middleware'
+import { checkRateLimit } from '@/lib/middleware/rate-limiter'
+import { createVotingError, createServerError, logError } from '@/lib/errors'
+import { auditLog } from '@/lib/services/audit'
 
 export async function POST(request: NextRequest) {
-  // Rate limiting
-  const rateLimitResponse = await applyRateLimit(request, 'vote')
-  if (rateLimitResponse) {
-    return rateLimitResponse
-  }
-
   try {
+    // Rate limiting avec notre nouveau système
     const body = await request.json()
+    const { token } = body
+
+    try {
+      await checkRateLimit('VOTE_CAST', token)
+    } catch (rateLimitError) {
+      logError(rateLimitError as any)
+      return NextResponse.json(
+        {
+          error: (rateLimitError as any).userMessage || 'Trop de tentatives',
+          code: (rateLimitError as any).code,
+        },
+        { status: 429 }
+      )
+    }
 
     // Validate input
     const validatedFields = castVoteSchema.safeParse(body)
 
     if (!validatedFields.success) {
+      const error = createServerError.validation(
+        'vote_data',
+        'Données de vote invalides'
+      )
+      logError(error)
       return NextResponse.json(
-        { error: 'Données invalides', details: validatedFields.error.flatten() },
+        { error: error.userMessage, details: validatedFields.error.flatten() },
         { status: 400 }
       )
     }
 
-    const { token, candidateIds, rankings } = validatedFields.data
+    const { candidateIds, rankings } = validatedFields.data
 
     // Use admin client to bypass RLS for vote insertion
     const supabase = createAdminClient()
@@ -37,20 +54,23 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (voterError || !voter) {
-      return NextResponse.json({ error: 'Token invalide' }, { status: 404 })
+      const error = createVotingError.tokenInvalid()
+      logError(error)
+      return NextResponse.json({ error: error.userMessage }, { status: 404 })
     }
 
     // Check if already voted
     if ((voter as any).has_voted) {
-      return NextResponse.json({ error: 'Vous avez déjà voté' }, { status: 400 })
+      const error = createVotingError.electionNotOpen('already_voted')
+      logError(error)
+      return NextResponse.json({ error: error.userMessage }, { status: 400 })
     }
 
     // Check if election is active
     if ((voter as any).elections.status !== 'active') {
-      return NextResponse.json(
-        { error: 'Le vote n\'est pas encore ouvert ou est déjà terminé' },
-        { status: 400 }
-      )
+      const error = createVotingError.electionNotOpen((voter as any).elections.status)
+      logError(error)
+      return NextResponse.json({ error: error.userMessage }, { status: 400 })
     }
 
     // Prepare vote data
@@ -84,11 +104,25 @@ export async function POST(request: NextRequest) {
 
     if (voteError) {
       console.error('Vote error:', voteError)
-      return NextResponse.json(
-        { error: 'Erreur lors de l\'enregistrement du vote' },
-        { status: 500 }
+      const error = createServerError.database('cast_vote', voteError)
+      logError(error)
+      await auditLog.logError(
+        'VOTING',
+        'VOTE',
+        'votes',
+        'Échec enregistrement vote',
+        { electionId: (voter as any).election_id, voterId: (voter as any).id }
       )
+      return NextResponse.json({ error: error.userMessage }, { status: 500 })
     }
+
+    // Audit log du vote
+    await auditLog.castVote(
+      'vote-' + Date.now(),
+      (voter as any).id,
+      (voter as any).election_id,
+      candidateIds
+    )
 
     // Return success with verification hash
     return NextResponse.json({
@@ -98,9 +132,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Cast vote error:', error)
-    return NextResponse.json(
-      { error: 'Erreur serveur' },
-      { status: 500 }
-    )
+    const appError = createServerError.internal('Cast vote failed', error as Error)
+    logError(appError)
+    return NextResponse.json({ error: appError.userMessage }, { status: 500 })
   }
 }

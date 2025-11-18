@@ -115,22 +115,22 @@ Modération par créateur
 Anonymisé
 
 🏆 Mon ordre de priorité recommandé
-Phase 4A - Sécurité & Critiques (Semaine 1)
+**Phase 4A - Sécurité & Critiques** (Semaine 1)
 ✅ Protection CSRF + Rate Limiting
 ✅ Messages d'erreur catégorisés
 ✅ Suppression élections (avec archivage)
 ✅ Audit logging basique
-Phase 4B - UX & Auth (Semaine 2)
+**Phase 4B - UX & Auth** (Semaine 2)
 ✅ OAuth Google/Azure (Outlook)
 ✅ Auto-save formulaires
 ✅ Import/Export CSV voteurs
 ✅ Mode sombre complet
-Phase 4C - Accessibilité & Polish (Semaine 3)
+**Phase 4C - Accessibilité & Polish** (Semaine 3)
 ✅ Audit WCAG 2.1 AA + corrections
 ✅ Optimistic UI
 ✅ Caching résultats
 ✅ Templates élections
-Phase 4D - Avancé (Optionnel)
+**Phase 4D - Avancé** (Optionnel) 
 ⭐ Webhooks Teams/Zoom
 ⭐ Multi-langues
 ⭐ Statistiques avancées
