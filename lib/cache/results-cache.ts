@@ -11,16 +11,18 @@ import { createClient } from '@/lib/supabase/server'
  * Récupère les résultats d'une élection avec cache
  * Cache indéfiniment si l'élection est close/archived
  */
-export const getCachedResults = unstable_cache(
-  async (electionId: string) => {
-    return await calculateResults(electionId)
-  },
-  ['election-results'],
-  {
-    tags: (electionId) => [`election-${electionId}-results`],
-    revalidate: false, // Pas de revalidation automatique pour élections closes
-  }
-)
+export function getCachedResults(electionId: string) {
+  return unstable_cache(
+    async () => {
+      return await calculateResults(electionId)
+    },
+    [`election-results-${electionId}`],
+    {
+      tags: [`election-${electionId}-results`],
+      revalidate: false, // Pas de revalidation automatique pour élections closes
+    }
+  )()
+}
 
 /**
  * Récupère les résultats avec cache intelligent

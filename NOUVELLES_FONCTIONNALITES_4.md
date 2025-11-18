@@ -133,7 +133,10 @@ Anonymisé
 **Phase 4D - Avancé** (Optionnel) 
 ⭐ Responsive
 ⭐ Webhooks Teams/Zoom
-⭐ Statistiques avancées
+⭐ Statistiques et Analytics avancées
+⭐ Mode sombre complet (dark mode)
+⭐ Notifications push (web push)
+⭐ Export PDF résultats
 ⭐ Multi-langues
 
 💡 Conclusion
