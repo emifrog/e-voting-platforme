@@ -6,45 +6,32 @@ import type { ElectionResults } from '@/types/models'
 export async function calculateResults(electionId: string): Promise<ElectionResults | null> {
   const supabase = createAdminClient()
 
-  // Get election
-  const { data: election, error: electionError } = await supabase
+  // Single query with all related data using Supabase relations (4 queries → 1 query)
+  const { data, error: electionError } = await supabase
     .from('elections')
-    .select('*')
+    .select(`
+      *,
+      candidates (*),
+      votes (*),
+      voters (*)
+    `)
     .eq('id', electionId)
     .single()
 
-  if (electionError || !election) {
+  if (electionError || !data) {
     return null
   }
 
-  // Get candidates
-  const { data: candidates } = await supabase
-    .from('candidates')
-    .select('*')
-    .eq('election_id', electionId)
-    .order('position')
-
-  // Get votes
-  const { data: votes } = await supabase
-    .from('votes')
-    .select('*')
-    .eq('election_id', electionId)
-
-  // Get voters
-  const { data: voters } = await supabase
-    .from('voters')
-    .select('*')
-    .eq('election_id', electionId)
-
-  if (!candidates || !votes || !voters) {
-    return null
-  }
-
-  // Cast to any to avoid TypeScript issues
-  const candidatesData = candidates as any[]
-  const votesData = votes as any[]
-  const votersData = voters as any[]
+  // Extract related data from single query result
+  const election = data
+  const candidatesData = (data.candidates as any[]) || []
+  const votesData = (data.votes as any[]) || []
+  const votersData = (data.voters as any[]) || []
   const electionData = election as any
+
+  if (!candidatesData.length) {
+    return null
+  }
 
   // Decrypt and count votes
   const voteCounts: Record<string, number> = {}

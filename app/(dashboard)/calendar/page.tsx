@@ -16,8 +16,8 @@ export default async function CalendarPage() {
   // Récupérer toutes les élections de l'utilisateur
   const { data: elections, error } = await supabase
     .from('elections')
-    .select('id, title, description, start_date, end_date, status, vote_type, created_by')
-    .eq('created_by', user.id)
+    .select('id, title, description, start_date, end_date, status, vote_type')
+    .eq('creator_id', user.id)
     .order('start_date', { ascending: true })
 
   if (error) {

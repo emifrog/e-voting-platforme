@@ -11,28 +11,16 @@ export default async function DashboardPage() {
 
   if (!user) return null
 
-  // Fetch user's elections stats
-  const { data: elections } = await supabase
+  // Single query to fetch all elections and calculate stats in-memory (4 queries → 1 query)
+  const { data: elections, count: totalElections } = await supabase
     .from('elections')
     .select('*', { count: 'exact' })
     .eq('creator_id', user.id)
+    .order('created_at', { ascending: false })
 
-  const { count: totalElections } = await supabase
-    .from('elections')
-    .select('*', { count: 'exact', head: true })
-    .eq('creator_id', user.id)
-
-  const { count: activeElections } = await supabase
-    .from('elections')
-    .select('*', { count: 'exact', head: true })
-    .eq('creator_id', user.id)
-    .eq('status', 'active')
-
-  const { count: draftElections } = await supabase
-    .from('elections')
-    .select('*', { count: 'exact', head: true })
-    .eq('creator_id', user.id)
-    .eq('status', 'draft')
+  // Calculate stats from fetched data (no additional queries)
+  const activeElections = elections?.filter((e) => e.status === 'active').length || 0
+  const draftElections = elections?.filter((e) => e.status === 'draft').length || 0
 
   return (
     <div className="space-y-8">

@@ -3,6 +3,7 @@
 import { logout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { DateTimeDisplay } from '@/components/dashboard/date-time-display'
 import type { Profile } from '@/types/models'
 import type { User } from '@supabase/supabase-js'
 
@@ -19,6 +20,9 @@ export default function Header({ user, profile }: HeaderProps) {
           {/* Mobile menu button could go here */}
         </div>
         <div className="flex items-center gap-x-4 lg:gap-x-6">
+          {/* Date and Time Display */}
+          <DateTimeDisplay />
+
           <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:bg-gray-800" aria-hidden="true" />
 
           <div className="flex items-center gap-x-4">

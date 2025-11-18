@@ -8,10 +8,12 @@ import { login } from '@/lib/actions/auth'
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; expired?: string }>
 }) {
   const params = await searchParams
   const error = params.error
+  const expired = params.expired === 'true'
+
   return (
     <Card>
       <CardHeader className="space-y-1">
@@ -22,6 +24,16 @@ export default async function LoginPage({
       </CardHeader>
       <form action={login}>
         <CardContent className="space-y-4">
+          {expired && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-sm text-amber-800 font-medium">
+                🔒 Votre session a expiré
+              </p>
+              <p className="text-sm text-amber-700 mt-1">
+                Veuillez vous reconnecter pour continuer.
+              </p>
+            </div>
+          )}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>

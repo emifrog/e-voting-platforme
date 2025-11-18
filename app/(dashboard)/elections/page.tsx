@@ -2,8 +2,13 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ElectionFilters } from '@/components/elections/election-filters'
 
-export default async function ElectionsPage() {
+export default async function ElectionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; status?: string; voteType?: string }>
+}) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -11,8 +16,10 @@ export default async function ElectionsPage() {
 
   if (!user) return null
 
-  // Fetch user's elections
-  const { data: elections } = await supabase
+  const { search, status, voteType } = await searchParams
+
+  // Build query with filters
+  let query = supabase
     .from('elections')
     .select(`
       *,
@@ -20,7 +27,23 @@ export default async function ElectionsPage() {
       voters(count)
     `)
     .eq('creator_id', user.id)
-    .order('created_at', { ascending: false })
+
+  // Apply search filter
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+  }
+
+  // Apply status filter
+  if (status && status !== 'all') {
+    query = query.eq('status', status)
+  }
+
+  // Apply vote type filter
+  if (voteType && voteType !== 'all') {
+    query = query.eq('vote_type', voteType)
+  }
+
+  const { data: elections } = await query.order('created_at', { ascending: false })
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -46,6 +69,9 @@ export default async function ElectionsPage() {
           <Link href="/elections/new">Créer une élection</Link>
         </Button>
       </div>
+
+      {/* Filters */}
+      <ElectionFilters initialSearch={search} initialStatus={status} initialVoteType={voteType} />
 
       {/* Elections Grid */}
       {elections && elections.length > 0 ? (
