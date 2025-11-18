@@ -56,6 +56,7 @@ export default function Sidebar({ profile }: SidebarProps) {
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-1.5 rounded-md hover:bg-muted transition-colors"
+            aria-label={isCollapsed ? "Agrandir la navigation" : "Minimiser la navigation"}
             title={isCollapsed ? "Agrandir" : "Minimiser"}
           >
             <svg
@@ -90,7 +91,7 @@ export default function Sidebar({ profile }: SidebarProps) {
           </div>
         )}
 
-        <nav className="flex flex-1 flex-col">
+        <nav id="main-navigation" aria-label="Navigation principale" className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">
             {/* Main Navigation */}
             <li>

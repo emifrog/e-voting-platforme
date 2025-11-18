@@ -33,9 +33,10 @@ export function DeleteElectionButton({
         <button
           onClick={() => setIsDialogOpen(true)}
           className={`p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ${className}`}
+          aria-label="Supprimer l'élection"
           title="Supprimer l'élection"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </button>
         <DeleteElectionDialog
           electionId={electionId}
@@ -54,8 +55,9 @@ export function DeleteElectionButton({
       <button
         onClick={() => setIsDialogOpen(true)}
         className={`flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-200 dark:border-red-800 ${className}`}
+        aria-label="Supprimer l'élection"
       >
-        <Trash2 className="w-4 h-4" />
+        <Trash2 className="w-4 h-4" aria-hidden="true" />
         <span>Supprimer</span>
       </button>
       <DeleteElectionDialog

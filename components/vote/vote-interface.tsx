@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useOptimistic } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import type { Election, Candidate } from '@/types/models'
 
 interface VoteInterfaceProps {
@@ -19,6 +20,12 @@ export function VoteInterface({ token, election, candidates, voterName }: VoteIn
   const [submitted, setSubmitted] = useState(false)
   const [voteHash, setVoteHash] = useState<string | null>(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
+
+  // Optimistic UI state
+  const [optimisticSubmitted, setOptimisticSubmitted] = useOptimistic(
+    submitted,
+    (state, newValue: boolean) => newValue
+  )
 
   const sortedCandidates = [...candidates].sort((a, b) => a.position - b.position)
 
@@ -46,8 +53,11 @@ export function VoteInterface({ token, election, candidates, voterName }: VoteIn
   }
 
   const confirmVote = async () => {
-    setIsSubmitting(true)
     setShowConfirmation(false)
+
+    // Optimistic update: afficher immédiatement l'écran de succès
+    setOptimisticSubmitted(true)
+    setIsSubmitting(true)
 
     try {
       const response = await fetch('/api/votes/cast', {
@@ -64,20 +74,32 @@ export function VoteInterface({ token, election, candidates, voterName }: VoteIn
       const data = await response.json()
 
       if (response.ok && data.success) {
+        // Confirmation du serveur
         setVoteHash(data.voteHash)
         setSubmitted(true)
+        toast.success('Vote enregistré avec succès !', {
+          description: 'Votre vote a été comptabilisé',
+        })
       } else {
-        alert(data.error || 'Erreur lors de l\'enregistrement du vote')
+        // Rollback de l'état optimiste en cas d'erreur
+        setOptimisticSubmitted(false)
+        toast.error(data.error || 'Erreur lors de l\'enregistrement du vote', {
+          description: 'Veuillez réessayer',
+        })
       }
     } catch (error) {
-      alert('Erreur de connexion. Veuillez réessayer.')
+      // Rollback en cas d'erreur réseau
+      setOptimisticSubmitted(false)
+      toast.error('Erreur de connexion', {
+        description: 'Veuillez vérifier votre connexion et réessayer',
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // Success screen
-  if (submitted && voteHash) {
+  // Success screen (optimiste ou confirmé)
+  if (optimisticSubmitted) {
     return (
       <Card className="bg-white">
         <CardHeader className="text-center">
@@ -93,9 +115,16 @@ export function VoteInterface({ token, election, candidates, voterName }: VoteIn
             <p className="text-sm text-muted-foreground mb-3">
               Conservez ce code pour vérifier que votre vote a bien été comptabilisé
             </p>
-            <div className="bg-white p-4 rounded border font-mono text-sm break-all">
-              {voteHash}
-            </div>
+            {voteHash ? (
+              <div className="bg-white p-4 rounded border font-mono text-sm break-all">
+                {voteHash}
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded border flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span className="text-sm text-muted-foreground">Génération du hash...</span>
+              </div>
+            )}
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

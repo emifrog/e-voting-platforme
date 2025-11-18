@@ -96,8 +96,9 @@ export function QRCodeInvitation({ electionId, electionTitle }: QRCodeInvitation
                 onClick={() => setIsFullscreen(true)}
                 variant="outline"
                 className="flex items-center gap-2"
+                aria-label="Afficher le QR code en plein écran"
               >
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-4 h-4" aria-hidden="true" />
                 Plein écran
               </Button>
             </>
@@ -131,9 +132,9 @@ export function QRCodeInvitation({ electionId, electionTitle }: QRCodeInvitation
             <button
               onClick={() => setIsFullscreen(false)}
               className="absolute top-4 right-4 p-3 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Fermer"
+              aria-label="Fermer le mode plein écran"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6" aria-hidden="true" />
             </button>
 
             {/* Large QR Code */}

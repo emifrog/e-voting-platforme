@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { calculateResults } from '@/lib/services/results'
+import { getResultsWithSmartCache } from '@/lib/cache/results-cache'
 import { ResultsWrapper } from '@/components/results/results-wrapper'
 
 export default async function ResultsPage({
@@ -30,8 +30,10 @@ export default async function ResultsPage({
     notFound()
   }
 
-  // Calculate results
-  const results = await calculateResults(id)
+  // Calculate results with smart caching
+  // Élections closes: cache permanent
+  // Élections actives: calcul en temps réel
+  const results = await getResultsWithSmartCache(id)
 
   if (!results) {
     return (
@@ -62,6 +64,11 @@ export default async function ResultsPage({
           <p className="text-muted-foreground mt-2">
             Vue d'ensemble des résultats du vote
           </p>
+          {(election.status === 'closed' || election.status === 'archived') && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+              <span className="text-green-600 dark:text-green-400 text-sm">⚡ Résultats en cache (élection close)</span>
+            </div>
+          )}
         </div>
       </div>
 

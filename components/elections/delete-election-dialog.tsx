@@ -12,6 +12,7 @@ import {
 } from '@/lib/actions/elections'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 
 interface DeleteElectionDialogProps {
   electionId: string
@@ -33,6 +34,14 @@ export function DeleteElectionDialog({
   const [confirmText, setConfirmText] = useState('')
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+
+  // Focus trap pour accessibilité
+  const dialogRef = useFocusTrap({
+    enabled: isOpen,
+    onEscape: onClose,
+    autoFocus: true,
+    restoreFocus: true,
+  })
 
   // Détermine le type de suppression
   const canHardDelete = status === 'draft' && !hasVotes
@@ -76,14 +85,22 @@ export function DeleteElectionDialog({
       />
 
       {/* Dialog */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+      <div
+        ref={dialogRef as React.RefObject<HTMLDivElement>}
+        role="dialog"
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+        aria-modal="true"
+        className="relative bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
+      >
+        <h2 id="delete-dialog-title" className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           {canHardDelete ? 'Supprimer définitivement' : 'Archiver l\'élection'}
         </h2>
 
         <div className="space-y-4">
           {/* Warning message */}
           <div
+            id="delete-dialog-description"
             className={`p-4 rounded-lg border ${
               canHardDelete
                 ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'

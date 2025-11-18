@@ -9,6 +9,7 @@ import { useState, useRef } from 'react'
 import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react'
 import { parseCSV, validateVoterImport, type VoterImportRow } from '@/lib/utils/csv'
 import { toast } from 'sonner'
+import { useFocusTrap } from '@/hooks/use-focus-trap'
 
 interface ImportVotersCSVProps {
   electionId: string
@@ -29,6 +30,14 @@ export function ImportVotersCSV({
   >([])
   const [step, setStep] = useState<'upload' | 'preview'>('upload')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Focus trap pour accessibilité
+  const dialogRef = useFocusTrap({
+    enabled: true,
+    onEscape: onClose,
+    autoFocus: true,
+    restoreFocus: true,
+  })
 
   const handleFileSelect = async (file: File) => {
     if (!file.name.endsWith('.csv')) {
@@ -119,17 +128,24 @@ export function ImportVotersCSV({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div
+        ref={dialogRef as React.RefObject<HTMLDivElement>}
+        role="dialog"
+        aria-labelledby="import-csv-title"
+        aria-modal="true"
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 id="import-csv-title" className="text-xl font-bold text-gray-900 dark:text-white">
             Importer des voteurs (CSV)
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            aria-label="Fermer la fenêtre d'import"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6" aria-hidden="true" />
           </button>
         </div>
 
