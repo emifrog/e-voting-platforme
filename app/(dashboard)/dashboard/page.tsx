@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { AnalyticsCharts } from '@/components/dashboard/analytics-charts'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -11,10 +12,14 @@ export default async function DashboardPage() {
 
   if (!user) return null
 
-  // Single query to fetch all elections and calculate stats in-memory (4 queries → 1 query)
+  // Single query to fetch all elections with related data for analytics
   const { data: elections, count: totalElections } = await supabase
     .from('elections')
-    .select('*', { count: 'exact' })
+    .select(`
+      *,
+      candidates(count),
+      voters(count)
+    `, { count: 'exact' })
     .eq('creator_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -90,6 +95,19 @@ export default async function DashboardPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Analytics Charts */}
+      {elections && elections.length > 0 && (
+        <>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
+            <p className="text-muted-foreground mt-2">
+              Statistiques et tendances en temps réel
+            </p>
+          </div>
+          <AnalyticsCharts initialElections={elections as any} />
+        </>
+      )}
 
       {/* Recent Elections */}
       {elections && elections.length > 0 && (

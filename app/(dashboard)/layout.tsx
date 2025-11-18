@@ -5,6 +5,7 @@ import Header from '@/components/layout/header'
 import { SidebarProvider } from '@/components/layout/sidebar-layout'
 import { DashboardLayoutWrapper } from '@/components/layout/dashboard-layout-wrapper'
 import { SessionProvider } from '@/components/providers/session-provider'
+import { ToastProvider } from '@/components/providers/toast-provider'
 
 export default async function DashboardLayout({
   children,
@@ -22,6 +23,7 @@ export default async function DashboardLayout({
   return (
     <SessionProvider>
       <SidebarProvider>
+        <ToastProvider />
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
           <Sidebar profile={profile} />
           <DashboardLayoutWrapper>

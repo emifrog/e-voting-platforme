@@ -14,6 +14,7 @@
 ---
 
 📊 Priorisation recommandée
+
 🔴 Critiques (Impact Performance/Sécurité)
 6. N+1 Queries sur elections ⚡
 Impact: Performances critiques, peut causer timeout avec beaucoup d'élections
@@ -85,6 +86,7 @@ Phase 3C - Analytics & Engagement (Semaine 3)
 Phase 3D - Avancé (Semaine 4)
 ├─ 2. Email/QR code inscription
 └─ 5. Quorums (si pas déjà fait)
+
 💡 Recommandations techniques
 N+1 Queries: Vérifier si vous utilisez bien .select('*, candidates(*), voters(count)') au lieu de queries multiples
 Analytics: Supabase Realtime + Recharts = combo parfait
