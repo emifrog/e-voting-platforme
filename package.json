@@ -41,6 +41,7 @@
     "otpauth": "^9.2.2",
     "papaparse": "^5.4.1",
     "qrcode": "^1.5.3",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.4",

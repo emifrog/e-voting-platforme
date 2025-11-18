@@ -165,6 +165,82 @@ export async function updateElection(formData: FormData) {
   redirect(`/elections/${electionId}`)
 }
 
+export async function closeElection(electionId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Non authentifié' }
+  }
+
+  // Fetch election with voters
+  const { data: election, error: fetchError } = await supabase
+    .from('elections')
+    .select(`
+      *,
+      voters(*)
+    `)
+    .eq('id', electionId)
+    .eq('creator_id', user.id)
+    .single()
+
+  if (fetchError || !election) {
+    return { error: 'Élection non trouvée' }
+  }
+
+  // Check quorum
+  const voters = (election.voters as any[]) || []
+  const totalVoters = voters.length
+  const votedCount = voters.filter((v) => v.has_voted).length
+  const participationRate = totalVoters > 0 ? (votedCount / totalVoters) * 100 : 0
+
+  let quorumReached = false
+  let quorumMessage = ''
+
+  if (election.quorum_type === 'percentage') {
+    const requiredPercentage = election.quorum_value || 0
+    quorumReached = participationRate >= requiredPercentage
+    quorumMessage = `Quorum requis: ${requiredPercentage}% - Participation: ${participationRate.toFixed(1)}%`
+  } else if (election.quorum_type === 'absolute') {
+    const requiredVotes = election.quorum_value || 0
+    quorumReached = votedCount >= requiredVotes
+    quorumMessage = `Quorum requis: ${requiredVotes} votes - Votes reçus: ${votedCount}`
+  } else {
+    // No quorum or 'none' type
+    quorumReached = true
+    quorumMessage = 'Aucun quorum requis'
+  }
+
+  // Update election status and quorum_reached
+  const { error: updateError } = await supabase
+    .from('elections')
+    .update({
+      status: 'closed',
+      quorum_reached: quorumReached,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', electionId)
+
+  if (updateError) {
+    console.error('Error closing election:', updateError)
+    return { error: 'Erreur lors de la fermeture de l\'élection' }
+  }
+
+  revalidatePath('/elections')
+  revalidatePath(`/elections/${electionId}`)
+
+  return {
+    success: true,
+    quorumReached,
+    quorumMessage,
+    participationRate: participationRate.toFixed(1),
+    votedCount,
+    totalVoters,
+  }
+}
+
 export async function deleteElection(electionId: string) {
   const supabase = await createClient()
   const {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { AddVoterDialog } from '@/components/voters/add-voter-dialog'
 import { ImportVotersDialog } from '@/components/voters/import-voters-dialog'
 import { VotersList } from '@/components/voters/voters-list'
+import { QRCodeInvitation } from '@/components/voters/qr-code-invitation'
 import { sendInvitations } from '@/lib/actions/voters'
 
 const VOTERS_PER_PAGE = 50
@@ -144,6 +145,11 @@ export default async function VotersPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* QR Code Invitation */}
+      {(election.status === 'draft' || election.status === 'scheduled') && (
+        <QRCodeInvitation electionId={election.id} electionTitle={election.title} />
+      )}
 
       {/* Actions */}
       {election.status === 'draft' && (
