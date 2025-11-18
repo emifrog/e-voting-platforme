@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { register } from '@/lib/actions/auth'
+import { OAuthButtons, OAuthDivider } from '@/components/auth/oauth-buttons'
 
 export default async function RegisterPage({
   searchParams,
@@ -20,13 +21,22 @@ export default async function RegisterPage({
           Inscrivez-vous pour commencer à créer vos votes
         </CardDescription>
       </CardHeader>
+      <CardContent className="space-y-4 pt-6">
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+            <p className="text-sm text-red-600 dark:text-red-400">{decodeURIComponent(error)}</p>
+          </div>
+        )}
+
+        {/* OAuth Buttons */}
+        <OAuthButtons redirectTo="/dashboard" />
+
+        {/* Divider */}
+        <OAuthDivider />
+      </CardContent>
+
       <form action={register}>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>
-            </div>
-          )}
+        <CardContent className="space-y-4 pt-0">
           <div className="space-y-2">
             <Label htmlFor="fullName">Nom complet</Label>
             <Input
