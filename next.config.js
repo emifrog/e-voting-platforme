@@ -19,7 +19,7 @@ const nextConfig = {
   poweredByHeader: false,
 
   // Optimisation du bundle
-  swcMinify: true,
+  // swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

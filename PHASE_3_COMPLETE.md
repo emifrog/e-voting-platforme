@@ -649,3 +649,332 @@ Votre plateforme e-voting dispose maintenant de :
 │ └──────────────────┘         │
 └──────────────────────────────┘
 ```
+---
+
+# 📱 Sidebar Collapsible - Documentation
+
+## ✨ Fonctionnalité Ajoutée
+
+Bouton pour minimiser/agrandir la sidebar du dashboard avec animation fluide.
+
+---
+
+## 🎯 Fonctionnalités
+
+### **1. Bouton Toggle**
+- ✅ Icône double chevron (`<<` / `>>`)
+- ✅ Animation de rotation 180° lors du clic
+- ✅ Tooltip au survol ("Minimiser" / "Agrandir")
+- ✅ Position : en haut à droite de la sidebar, à côté du logo
+
+### **2. État Minimisé (Collapsed)**
+
+**Largeur** : 80px (vs 256px normal)
+
+**Éléments visibles** :
+- Logo "E" uniquement (sans texte "E-Voting")
+- Avatar utilisateur seul (sans nom/email)
+- Icônes de navigation uniquement
+- Badge "Nouveau" devient un point bleu
+- Icône plan (⭐ Pro ou 💎 Free)
+
+**Éléments cachés** :
+- Texte "E-Voting"
+- Nom et email utilisateur
+- Titres de menu (Dashboard, Élections, etc.)
+- Descriptions (Vue d'ensemble, etc.)
+- Sections headers (NAVIGATION, ACTIONS RAPIDES)
+- Texte des actions rapides
+- Détails du plan d'abonnement
+
+### **3. Tooltips**
+En mode minimisé, tous les items affichent un tooltip au survol :
+- Navigation : nom complet de la page
+- Actions rapides : nom de l'action
+- Plan : "Plan Pro" ou "Passer à Pro"
+
+### **4. Animations**
+
+**Transition de largeur** :
+```css
+transition-all duration-300 ease-in-out
+```
+
+**Éléments** :
+- Sidebar : 300ms
+- Contenu principal : 300ms (ajustement du padding-left)
+- Rotation icône toggle : 300ms
+
+**États** :
+- Normal : `w-64` (256px)
+- Minimisé : `w-20` (80px)
+
+---
+
+## 🏗️ Architecture Technique
+
+### **Fichiers Créés**
+
+**1. `components/layout/sidebar-layout.tsx`**
+```typescript
+// Context Provider pour l'état de la sidebar
+export function SidebarProvider({ children })
+export function useSidebar() // Hook pour accéder à l'état
+```
+
+**2. `components/layout/dashboard-layout-wrapper.tsx`**
+```typescript
+// Wrapper client qui ajuste le padding du contenu
+export function DashboardLayoutWrapper({ children })
+```
+
+### **Fichiers Modifiés**
+
+**1. `components/layout/sidebar.tsx`**
+- Import du hook `useSidebar`
+- État `isCollapsed` depuis le context
+- Rendu conditionnel pour tous les éléments
+- Bouton toggle avec icône SVG
+
+**2. `app/(dashboard)/layout.tsx`**
+- Wrap avec `SidebarProvider`
+- Utilisation de `DashboardLayoutWrapper`
+
+---
+
+## 💻 Code Clé
+
+### **Bouton Toggle**
+```tsx
+<button
+  onClick={() => setIsCollapsed(!isCollapsed)}
+  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+  title={isCollapsed ? "Agrandir" : "Minimiser"}
+>
+  <svg className={cn(
+    "transition-transform duration-300",
+    isCollapsed && "rotate-180"
+  )}>
+    <path d="m11 17-5-5 5-5" />
+    <path d="m18 17-5-5 5-5" />
+  </svg>
+</button>
+```
+
+### **Item de Navigation (Mode Normal)**
+```tsx
+<div className="flex items-center gap-x-3">
+  <span className="text-xl">{item.icon}</span>
+  <div className="flex flex-col">
+    <span>{item.name}</span>
+    <span className="text-xs font-normal text-muted-foreground">
+      {item.description}
+    </span>
+  </div>
+</div>
+{item.badge && (
+  <Badge variant="secondary">{item.badge}</Badge>
+)}
+```
+
+### **Item de Navigation (Mode Minimisé)**
+```tsx
+<div className="relative">
+  <span className="text-xl">{item.icon}</span>
+  {item.badge && (
+    <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></span>
+  )}
+</div>
+```
+
+### **Context & Hook**
+```typescript
+const SidebarContext = createContext<SidebarContextType>()
+
+export function useSidebar() {
+  const context = useContext(SidebarContext)
+  if (!context) throw new Error('useSidebar must be used within SidebarProvider')
+  return context
+}
+
+export function SidebarProvider({ children }) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  return (
+    <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
+      {children}
+    </SidebarContext.Provider>
+  )
+}
+```
+
+### **Ajustement du Contenu**
+```tsx
+function DashboardContent({ children }) {
+  const { isCollapsed } = useSidebar()
+
+  return (
+    <div className={cn(
+      'transition-all duration-300 ease-in-out',
+      isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+    )}>
+      {children}
+    </div>
+  )
+}
+```
+
+---
+
+## 🎨 États Visuels
+
+### **Normal (Étendu)**
+```
+┌─ E-Voting ──────[<<]──────┐
+│                            │
+│  ╭───╮                     │
+│  │ AM │ Alice Martin       │
+│  ╰───╯ alice@example.com   │
+│                            │
+│ NAVIGATION                 │
+│ 📊 Dashboard               │
+│    Vue d'ensemble          │
+│                            │
+│ 🗳️ Élections               │
+│    Gérer les élections     │
+│                            │
+│ 📅 Calendrier   [Nouveau]  │
+│    Vue calendrier          │
+│                            │
+│ ACTIONS RAPIDES            │
+│ ➕ Nouvelle élection       │
+│                            │
+│ ┌──────────────┐           │
+│ │ Plan: Free   │           │
+│ │ [Passer Pro] │           │
+│ └──────────────┘           │
+└────────────────────────────┘
+```
+
+### **Minimisé**
+```
+┌─[>>]─┐
+│      │
+│  E   │
+│      │
+│ ╭─╮  │
+│ │AM│  │
+│ ╰─╯  │
+│      │
+│ 📊   │
+│ 🗳️   │
+│ 📅•  │
+│ 🔐   │
+│ ⚙️   │
+│      │
+│ ➕   │
+│ ❓   │
+│      │
+│ 💎   │
+└──────┘
+```
+
+---
+
+## ✅ Checklist
+
+### **Tests à Effectuer**
+
+- [ ] Clic sur le bouton toggle minimise la sidebar
+- [ ] Clic à nouveau agrandit la sidebar
+- [ ] Animation fluide (300ms)
+- [ ] Contenu principal s'ajuste automatiquement
+- [ ] Icône du bouton rotate 180°
+- [ ] Tooltips apparaissent en mode minimisé
+- [ ] Avatar seul visible en mode minimisé
+- [ ] Icônes de navigation visibles
+- [ ] Badge devient point bleu
+- [ ] Plan affiche icône (⭐/💎)
+- [ ] Pas de texte débordant
+- [ ] Responsive sur desktop (>= 1024px)
+- [ ] Dark mode fonctionne
+
+### **Comportement Attendu**
+
+**Au clic sur le bouton** :
+1. ✅ Sidebar passe de 256px à 80px (ou inverse)
+2. ✅ Contenu principal ajuste son padding-left
+3. ✅ Animation fluide de 300ms
+4. ✅ Icône du bouton rotate
+5. ✅ Tous les textes disparaissent/apparaissent
+
+**En mode minimisé** :
+1. ✅ Seules les icônes sont visibles
+2. ✅ Tooltips au survol
+3. ✅ Fonctionnalité complète préservée
+4. ✅ Toujours cliquable et navigable
+
+---
+
+## 🚀 Utilisation
+
+Le bouton est automatiquement disponible dans la sidebar. Aucune configuration nécessaire !
+
+**Pour l'utilisateur** :
+1. Cliquer sur l'icône `<<` en haut à droite de la sidebar
+2. La sidebar se minimise
+3. Cliquer sur `>>` pour agrandir à nouveau
+
+**Avantages** :
+- ✅ Plus d'espace pour le contenu
+- ✅ Navigation rapide avec icônes
+- ✅ Tooltips pour ne pas se perdre
+- ✅ État non persistant (reset au rechargement)
+
+**Futur possible** :
+- 💾 Sauvegarder l'état dans localStorage
+- 📱 Version mobile avec drawer
+- ⌨️ Raccourci clavier (Ctrl+B)
+- 🎯 Animation du contenu au collapse
+
+---
+
+## 📝 Notes Techniques
+
+### **Performance**
+- Utilise CSS transitions (GPU accelerated)
+- Context API React (pas de prop drilling)
+- État local (pas de requête API)
+- Re-render minimal (uniquement sidebar + wrapper)
+
+### **Accessibilité**
+- Bouton avec `title` pour tooltip natif
+- Icône SVG avec path accessible
+- Contraste suffisant pour les icônes
+- Tooltips sur tous les items minimisés
+
+### **Compatibilité**
+- Desktop uniquement (>= lg breakpoint)
+- Caché sur mobile/tablette
+- Fonctionne sur tous navigateurs modernes
+- Dark mode supporté
+
+---
+
+## 🎉 Résultat
+
+Une sidebar moderne et fonctionnelle avec :
+- ✅ Minimisation fluide
+- ✅ Gain d'espace écran
+- ✅ Navigation préservée
+- ✅ UX professionnelle
+- ✅ Animations élégantes
+
+**Gagne ~176px de largeur en mode minimisé !**
+(256px → 80px = gain de 176px)
+
+---
+
+**Date d'implémentation** : 17 janvier 2025
+**Temps d'implémentation** : ~30 minutes
+**Fichiers créés** : 3
+**Fichiers modifiés** : 2
