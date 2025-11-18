@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { AddCandidateDialog } from '@/components/elections/add-candidate-dialog'
 import { CandidateList } from '@/components/elections/candidate-list'
+import { DeleteElectionButton } from '@/components/elections/delete-election-button'
 
 export default async function ElectionDetailPage({
   params,
@@ -70,11 +71,20 @@ export default async function ElectionDetailPage({
             <p className="text-muted-foreground mt-2">{election.description}</p>
           )}
         </div>
-        {election.status === 'draft' && (
-          <Button asChild>
-            <Link href={`/elections/${election.id}/edit`}>Éditer</Link>
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {election.status === 'draft' && (
+            <Button asChild>
+              <Link href={`/elections/${election.id}/edit`}>Éditer</Link>
+            </Button>
+          )}
+          <DeleteElectionButton
+            electionId={election.id}
+            electionTitle={election.title}
+            status={election.status}
+            hasVotes={votedCount > 0}
+            variant="button"
+          />
+        </div>
       </div>
 
       {/* Stats Cards */}

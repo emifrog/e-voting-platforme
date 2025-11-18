@@ -131,12 +131,14 @@ Anonymisé
 ✅ Caching résultats
 ✅ Templates élections
 **Phase 4D - Avancé** (Optionnel) 
+⭐ Responsive
 ⭐ Webhooks Teams/Zoom
-⭐ Multi-langues
 ⭐ Statistiques avancées
+⭐ Multi-langues
 
 💡 Conclusion
-Tes 7 propositions sont pertinentes, particulièrement les points 1, 6 et 7 qui devraient être prioritaires. J'ajouterais rate limiting et audit logging comme essentiels pour une application de vote sécurisée. L'application est déjà très solide techniquement. Les prochaines étapes devraient se concentrer sur :
+Tes 7 propositions sont pertinentes, particulièrement les points 1, 6 et 7 qui devraient être prioritaires. J'ajouterais rate limiting et audit logging comme essentiels pour une application de vote sécurisée. L'application est déjà très solide techniquement. 
+Les prochaines étapes devraient se concentrer sur :
 Sécurité (CSRF, rate limiting)
 Fiabilité (error handling, logging)
 Expérience utilisateur (auto-save, OAuth, accessibilité)

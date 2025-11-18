@@ -4,13 +4,16 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { loginSchema, registerSchema } from '@/lib/validations/auth'
-import { checkRateLimitForAction } from '@/lib/utils/server-action-rate-limit'
+import { checkRateLimit } from '@/lib/middleware/rate-limiter'
 
 export async function login(formData: FormData) {
-  // Rate limiting protection against brute force
-  const rateLimit = await checkRateLimitForAction('login')
-  if (rateLimit.limited) {
-    redirect(`/login?error=${encodeURIComponent('Trop de tentatives. Veuillez réessayer plus tard.')}`)
+  const emailInput = formData.get('email') as string
+
+  // Rate limiting protection against brute force avec notre nouveau système
+  try {
+    await checkRateLimit('LOGIN', emailInput || 'unknown')
+  } catch (error) {
+    redirect(`/login?error=${encodeURIComponent('Trop de tentatives. Veuillez réessayer dans quelques instants.')}`)
   }
 
   const supabase = await createClient()
@@ -43,6 +46,15 @@ export async function login(formData: FormData) {
 }
 
 export async function register(formData: FormData) {
+  const emailInput = formData.get('email') as string
+
+  // Rate limiting protection
+  try {
+    await checkRateLimit('REGISTER', emailInput || 'unknown')
+  } catch (error) {
+    redirect(`/register?error=${encodeURIComponent('Trop d\'inscriptions. Veuillez réessayer plus tard.')}`)
+  }
+
   const supabase = await createClient()
 
   // Validate input
