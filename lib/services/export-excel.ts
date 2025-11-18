@@ -30,10 +30,10 @@ export function exportResultsToExcel(results: ExportElectionResults): void {
     ['Électeurs inscrits', results.stats.totalVoters],
     ['Votes exprimés', results.stats.totalVotes],
     ['Taux de participation', `${results.stats.participationRate.toFixed(2)}%`],
-    ['Abstentions', results.stats.abstentions],
-    ['Votes blancs', results.stats.blanks],
-    ['Quorum requis', `${results.stats.quorum}%`],
-    ['Quorum atteint', results.stats.participationRate >= results.stats.quorum ? 'Oui' : 'Non'],
+    ['Abstentions', results.stats.abstentions || 0],
+    ['Votes blancs', results.stats.blanks || 0],
+    ['Quorum requis', results.stats.quorum ? `${results.stats.quorum.required}%` : 'N/A'],
+    ['Quorum atteint', results.stats.quorum?.reached ? 'Oui' : 'Non'],
   ]
 
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryData)
@@ -74,9 +74,9 @@ export function exportResultsToExcel(results: ExportElectionResults): void {
   XLSX.utils.book_append_sheet(workbook, resultsSheet, 'Résultats')
 
   // Feuille 3: Statistiques avancées
-  const validVotes = results.stats.totalVotes - results.stats.blanks
-  const blankRate = results.stats.totalVotes > 0 ? (results.stats.blanks / results.stats.totalVotes) * 100 : 0
-  const abstentionRate = results.stats.totalVoters > 0 ? (results.stats.abstentions / results.stats.totalVoters) * 100 : 0
+  const validVotes = results.stats.totalVotes - (results.stats.blanks || 0)
+  const blankRate = results.stats.totalVotes > 0 ? ((results.stats.blanks || 0) / results.stats.totalVotes) * 100 : 0
+  const abstentionRate = results.stats.totalVoters > 0 ? ((results.stats.abstentions || 0) / results.stats.totalVoters) * 100 : 0
 
   const winner = results.candidates.find(c => c.isWinner)
   const secondPlace = results.candidates.filter(c => !c.isWinner)[0]

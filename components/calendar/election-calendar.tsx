@@ -9,7 +9,6 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import frLocale from '@fullcalendar/core/locales/fr'
-import './calendar-styles.css'
 
 interface Election {
   id: string
