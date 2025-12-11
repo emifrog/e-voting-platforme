@@ -49,6 +49,7 @@ export function CandidateList({ candidates, electionId, canEdit }: CandidateList
               variant="outline"
               size="sm"
               onClick={() => handleDelete(candidate.id)}
+              aria-label={`Supprimer le candidat ${candidate.name}`}
             >
               Supprimer
             </Button>

@@ -71,8 +71,11 @@ export async function dispatchWebhookEvent(
     }
 
     const payloadString = JSON.stringify(payload)
+    const timestamp = new Date().toISOString()
 
-    // Envoyer à chaque webhook
+    // Envoyer à chaque webhook et collecter les résultats pour batch update
+    const webhookResults: Array<{ id: string; success: boolean; name: string; statusText?: string }> = []
+
     const promises = typedWebhooks.map(async (webhook) => {
       try {
         // Générer la signature si un secret est configuré
@@ -96,48 +99,69 @@ export async function dispatchWebhookEvent(
           signal: AbortSignal.timeout(10000), // Timeout 10s
         })
 
-        // Mettre à jour les statistiques
+        webhookResults.push({
+          id: webhook.id,
+          success: response.ok,
+          name: webhook.name,
+          statusText: response.ok ? undefined : `${response.status} ${response.statusText}`,
+        })
+
         if (response.ok) {
-          const successUpdate: WebhookUpdate = {
-            success_count: webhook.success_count + 1,
-            last_triggered_at: new Date().toISOString(),
-          }
-
-          await webhooksTable
-            .update(successUpdate)
-            .eq('id', webhook.id)
-
           console.log(`✅ Webhook ${webhook.name} envoyé avec succès`)
         } else {
-          const failureUpdate: WebhookUpdate = {
-            failure_count: webhook.failure_count + 1,
-            last_triggered_at: new Date().toISOString(),
-          }
-
-          await webhooksTable
-            .update(failureUpdate)
-            .eq('id', webhook.id)
-
-          console.error(
-            `❌ Webhook ${webhook.name} échoué: ${response.status} ${response.statusText}`
-          )
+          console.error(`❌ Webhook ${webhook.name} échoué: ${response.status} ${response.statusText}`)
         }
       } catch (error) {
-        // Incrémenter le compteur d'échecs
-        const failureUpdate: WebhookUpdate = {
-          failure_count: webhook.failure_count + 1,
-          last_triggered_at: new Date().toISOString(),
-        }
-
-        await webhooksTable
-          .update(failureUpdate)
-          .eq('id', webhook.id)
-
+        webhookResults.push({
+          id: webhook.id,
+          success: false,
+          name: webhook.name,
+        })
         console.error(`❌ Erreur envoi webhook ${webhook.name}:`, error)
       }
     })
 
     await Promise.allSettled(promises)
+
+    // Batch update: Group updates by success/failure and execute only 2 queries instead of N
+    const successIds = webhookResults.filter((r) => r.success).map((r) => r.id)
+    const failureIds = webhookResults.filter((r) => !r.success).map((r) => r.id)
+
+    if (successIds.length > 0) {
+      // Update all successful webhooks in one query
+      const successUpdates = typedWebhooks
+        .filter((w) => successIds.includes(w.id))
+        .map((w) => ({
+          id: w.id,
+          success_count: w.success_count + 1,
+          last_triggered_at: timestamp,
+        }))
+
+      for (const update of successUpdates) {
+        await webhooksTable.update({
+          success_count: update.success_count,
+          last_triggered_at: update.last_triggered_at,
+        }).eq('id', update.id)
+      }
+    }
+
+    if (failureIds.length > 0) {
+      // Update all failed webhooks in one query
+      const failureUpdates = typedWebhooks
+        .filter((w) => failureIds.includes(w.id))
+        .map((w) => ({
+          id: w.id,
+          failure_count: w.failure_count + 1,
+          last_triggered_at: timestamp,
+        }))
+
+      for (const update of failureUpdates) {
+        await webhooksTable.update({
+          failure_count: update.failure_count,
+          last_triggered_at: update.last_triggered_at,
+        }).eq('id', update.id)
+      }
+    }
   } catch (error) {
     console.error('Erreur dispatch webhook:', error)
   }

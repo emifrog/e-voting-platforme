@@ -14,8 +14,20 @@ export const createElectionSchema = z.object({
   allowAbstention: z.boolean().default(true),
   quorumType: z.enum(['none', 'percentage', 'absolute', 'weighted']).default('none'),
   quorumValue: z.number().min(0).max(100).optional(),
-  startDate: z.string().datetime('Date de début invalide'),
-  endDate: z.string().datetime('Date de fin invalide'),
+  startDate: z.string().min(1, 'Date de début requise').transform((val) => {
+    // Convertir datetime-local (YYYY-MM-DDTHH:mm) en ISO 8601
+    if (!val.includes('Z') && !val.includes('+')) {
+      return new Date(val).toISOString()
+    }
+    return val
+  }),
+  endDate: z.string().min(1, 'Date de fin requise').transform((val) => {
+    // Convertir datetime-local (YYYY-MM-DDTHH:mm) en ISO 8601
+    if (!val.includes('Z') && !val.includes('+')) {
+      return new Date(val).toISOString()
+    }
+    return val
+  }),
   meetingPlatform: z.enum(['teams', 'zoom', 'custom']).optional(),
   meetingUrl: z.string().url('URL invalide').optional().or(z.literal('')),
   meetingPassword: z.string().optional(),

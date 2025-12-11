@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { addVoterSchema } from '@/lib/validations/voter'
 
@@ -180,4 +181,58 @@ export async function sendInvitations(electionId: string) {
 
   revalidatePath(`/elections/${electionId}/voters`)
   return { success: true, sent: voters.length }
+}
+
+export async function registerVoter(formData: FormData) {
+  const supabase = await createClient()
+  const electionId = formData.get('electionId') as string
+  const email = formData.get('email') as string
+  const name = formData.get('name') as string | null
+
+  if (!electionId || !email) {
+    redirect(`/elections/${electionId}/register?error=${encodeURIComponent('Données manquantes')}`)
+  }
+
+  // Validate email
+  if (!email.includes('@')) {
+    redirect(`/elections/${electionId}/register?error=${encodeURIComponent('Email invalide')}`)
+  }
+
+  // Check if election exists and is open for registration
+  const { data: election } = await supabase
+    .from('elections')
+    .select('id, status')
+    .eq('id', electionId)
+    .single()
+
+  if (!election || election.status === 'closed' || election.status === 'archived') {
+    redirect(`/elections/${electionId}/register?error=${encodeURIComponent('Inscriptions fermées')}`)
+  }
+
+  // Check if voter already exists
+  const { data: existingVoter } = await supabase
+    .from('voters')
+    .select('id')
+    .eq('election_id', electionId)
+    .eq('email', email)
+    .single()
+
+  if (existingVoter) {
+    redirect(`/elections/${electionId}/register?error=${encodeURIComponent('Vous êtes déjà inscrit')}`)
+  }
+
+  // Add voter
+  const { error } = await supabase.from('voters').insert({
+    election_id: electionId,
+    email,
+    name: name || email.split('@')[0],
+    weight: 1.0,
+  })
+
+  if (error) {
+    console.error('Error registering voter:', error)
+    redirect(`/elections/${electionId}/register?error=${encodeURIComponent('Erreur lors de l\'inscription')}`)
+  }
+
+  redirect(`/elections/${electionId}/register?success=true`)
 }

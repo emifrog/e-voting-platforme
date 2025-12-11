@@ -3,8 +3,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ResultsChart } from './results-chart'
 import { ResultsPodium } from './results-podium'
+import { ResultsPieChart } from './results-pie-chart'
+import { AdvancedStatistics } from './advanced-statistics'
 import { ExportButtons } from './export-buttons'
 import { adaptResultsForExport } from '@/lib/utils/results-adapter'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface ResultsWrapperProps {
   results: any // DB results format
@@ -21,16 +24,30 @@ export function ResultsWrapper({ results }: ResultsWrapperProps) {
       {/* Podium */}
       <ResultsPodium candidates={candidates.slice(0, 3)} />
 
-      {/* Bar Chart */}
+      {/* Statistiques Avancées */}
+      <AdvancedStatistics stats={stats} candidates={candidates} />
+
+      {/* Charts avec Tabs */}
       <Card>
         <CardHeader>
-          <CardTitle>Répartition des votes</CardTitle>
+          <CardTitle>Visualisations des résultats</CardTitle>
           <CardDescription>
-            Graphique de répartition par candidat
+            Différentes représentations graphiques des votes
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResultsChart candidates={candidates} />
+          <Tabs defaultValue="bar" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="bar">Graphique en barres</TabsTrigger>
+              <TabsTrigger value="pie">Graphique circulaire</TabsTrigger>
+            </TabsList>
+            <TabsContent value="bar">
+              <ResultsChart candidates={candidates} />
+            </TabsContent>
+            <TabsContent value="pie">
+              <ResultsPieChart candidates={candidates} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 

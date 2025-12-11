@@ -4,14 +4,17 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { login } from '@/lib/actions/auth'
+import { OAuthButtons, OAuthDivider } from '@/components/auth/oauth-buttons'
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; expired?: string }>
 }) {
   const params = await searchParams
   const error = params.error
+  const expired = params.expired === 'true'
+
   return (
     <Card>
       <CardHeader className="space-y-1">
@@ -20,13 +23,32 @@ export default async function LoginPage({
           Connectez-vous à votre compte
         </CardDescription>
       </CardHeader>
+      <CardContent className="space-y-4 pt-6">
+        {expired && (
+          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
+            <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+              🔒 Votre session a expiré
+            </p>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              Veuillez vous reconnecter pour continuer.
+            </p>
+          </div>
+        )}
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+            <p className="text-sm text-red-600 dark:text-red-400">{decodeURIComponent(error)}</p>
+          </div>
+        )}
+
+        {/* OAuth Buttons */}
+        <OAuthButtons redirectTo="/dashboard" />
+
+        {/* Divider */}
+        <OAuthDivider />
+      </CardContent>
+
       <form action={login}>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{decodeURIComponent(error)}</p>
-            </div>
-          )}
+        <CardContent className="space-y-4 pt-0">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

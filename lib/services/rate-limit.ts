@@ -24,7 +24,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
    */
   loginRateLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(5, '1 h'),
+    limiter: Ratelimit.fixedWindow(5, '1 h'),
     analytics: true,
     prefix: 'ratelimit:login',
   })
@@ -35,7 +35,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
    */
   voteRateLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(10, '1 m'),
+    limiter: Ratelimit.fixedWindow(10, '1 m'),
     analytics: true,
     prefix: 'ratelimit:vote',
   })
@@ -46,7 +46,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
    */
   apiRateLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(100, '1 m'),
+    limiter: Ratelimit.fixedWindow(100, '1 m'),
     analytics: true,
     prefix: 'ratelimit:api',
   })
@@ -57,7 +57,7 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
    */
   twoFactorRateLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(10, '5 m'),
+    limiter: Ratelimit.fixedWindow(10, '5 m'),
     analytics: true,
     prefix: 'ratelimit:2fa',
   })
