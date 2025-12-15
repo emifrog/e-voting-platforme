@@ -1,18 +1,16 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Routes that require authentication check
+// Only these routes require authentication check via Supabase
 const protectedPaths = ['/dashboard', '/elections', '/settings']
-const authPaths = ['/login', '/register']
 
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Skip auth check for non-protected and non-auth paths
+  // Only check auth for protected paths - skip everything else for performance
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
-  const isAuthPath = authPaths.some(path => pathname.startsWith(path))
 
-  if (!isProtectedPath && !isAuthPath) {
+  if (!isProtectedPath) {
     return NextResponse.next()
   }
 
@@ -58,21 +56,15 @@ export async function updateSession(request: NextRequest) {
     })
   }
 
-  // Use getSession for faster response (cached), then verify with getUser only if needed
+  // Use getSession for faster response (cached)
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  if (!session && isProtectedPath) {
+  if (!session) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
-  }
-
-  if (session && isAuthPath) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
