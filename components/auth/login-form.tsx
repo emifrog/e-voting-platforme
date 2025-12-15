@@ -39,6 +39,17 @@ export function LoginForm() {
             required
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            name="rememberMe"
+            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+          />
+          <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
+            Rester connecté
+          </Label>
+        </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-4">
         <Button type="submit" className="w-full">
