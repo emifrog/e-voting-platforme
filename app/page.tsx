@@ -1,9 +1,19 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="text-center">
+        <div className="flex justify-center mb-8">
+          <Image
+            src="/logo-removebg.png"
+            alt="E-Voting Platform"
+            width={120}
+            height={120}
+            priority
+          />
+        </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
           E-Voting Platform
         </h1>
