@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -15,7 +16,7 @@ interface SidebarProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: '📊', description: 'Vue d\'ensemble' },
   { name: 'Élections', href: '/elections', icon: '🗳️', description: 'Gérer les élections' },
-  { name: 'Calendrier', href: '/calendar', icon: '📅', description: 'Vue calendrier', badge: 'Nouveau' },
+  { name: 'Calendrier', href: '/calendar', icon: '📅', description: 'Vue calendrier' },
   { name: 'Sécurité', href: '/settings/security', icon: '🔐', description: 'Authentification 2FA' },
   { name: 'Paramètres', href: '/settings', icon: '⚙️', description: 'Configuration' },
 ]
@@ -41,16 +42,22 @@ export default function Sidebar({ profile }: SidebarProps) {
         <div className="flex h-16 shrink-0 items-center justify-between">
           {!isCollapsed ? (
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold">
-                E
-              </div>
-              <h1 className="text-xl font-bold text-primary">E-Voting</h1>
+              <Image
+                src="/logo-removebg.png"
+                alt="E-Voting Platform"
+                width={32}
+                height={32}
+              />
+              <h1 className="text-xl font-bold text-primary">E-Voting Platform</h1>
             </Link>
           ) : (
             <Link href="/dashboard" className="flex items-center justify-center w-full">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold">
-                E
-              </div>
+              <Image
+                src="/logo-removebg.png"
+                alt="E-Voting Platform"
+                width={32}
+                height={32}
+              />
             </Link>
           )}
           <button
@@ -119,9 +126,7 @@ export default function Sidebar({ profile }: SidebarProps) {
                         {isCollapsed ? (
                           <div className="relative">
                             <span className="text-xl">{item.icon}</span>
-                            {item.badge && (
-                              <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></span>
-                            )}
+
                           </div>
                         ) : (
                           <>
@@ -134,11 +139,7 @@ export default function Sidebar({ profile }: SidebarProps) {
                                 </span>
                               </div>
                             </div>
-                            {item.badge && (
-                              <Badge variant="secondary" className="text-xs">
-                                {item.badge}
-                              </Badge>
-                            )}
+
                           </>
                         )}
                       </Link>
