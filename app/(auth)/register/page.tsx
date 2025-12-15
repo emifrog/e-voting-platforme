@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OAuthButtons, OAuthDivider } from '@/components/auth/oauth-buttons'
 import { RegisterForm } from '@/components/auth/register-form'
@@ -12,6 +13,15 @@ export default async function RegisterPage({
   return (
     <Card>
       <CardHeader className="space-y-1">
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/logo-removebg.png"
+            alt="E-Voting Platform"
+            width={80}
+            height={80}
+            priority
+          />
+        </div>
         <CardTitle className="text-2xl font-bold text-center">Créer un compte</CardTitle>
         <CardDescription className="text-center">
           Inscrivez-vous pour commencer à créer vos votes

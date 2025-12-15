@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OAuthButtons, OAuthDivider } from '@/components/auth/oauth-buttons'
 import { LoginForm } from '@/components/auth/login-form'
@@ -14,6 +15,15 @@ export default async function LoginPage({
   return (
     <Card>
       <CardHeader className="space-y-1">
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/logo-removebg.png"
+            alt="E-Voting Platform"
+            width={80}
+            height={80}
+            priority
+          />
+        </div>
         <CardTitle className="text-2xl font-bold text-center">Connexion</CardTitle>
         <CardDescription className="text-center">
           Connectez-vous à votre compte
