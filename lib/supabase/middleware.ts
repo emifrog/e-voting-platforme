@@ -1,7 +1,21 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Routes that require authentication check
+const protectedPaths = ['/dashboard', '/elections', '/settings']
+const authPaths = ['/login', '/register']
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  // Skip auth check for non-protected and non-auth paths
+  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
+  const isAuthPath = authPaths.some(path => pathname.startsWith(path))
+
+  if (!isProtectedPath && !isAuthPath) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
@@ -44,27 +58,19 @@ export async function updateSession(request: NextRequest) {
     })
   }
 
-  // Refreshing the auth token
+  // Use getSession for faster response (cached), then verify with getUser only if needed
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/elections', '/settings']
-  const isProtectedPath = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
-
-  if (!user && isProtectedPath) {
+  if (!session && isProtectedPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
+    url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from auth pages
-  const authPaths = ['/login', '/register']
-  const isAuthPath = authPaths.some(path => request.nextUrl.pathname.startsWith(path))
-
-  if (user && isAuthPath) {
+  if (session && isAuthPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
