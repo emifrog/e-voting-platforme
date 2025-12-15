@@ -1,10 +1,6 @@
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { login } from '@/lib/actions/auth'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { OAuthButtons, OAuthDivider } from '@/components/auth/oauth-buttons'
+import { LoginForm } from '@/components/auth/login-form'
 
 export default async function LoginPage({
   searchParams,
@@ -27,7 +23,7 @@ export default async function LoginPage({
         {expired && (
           <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
             <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-              🔒 Votre session a expiré
+              Votre session a expiré
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
               Veuillez vous reconnecter pour continuer.
@@ -47,49 +43,7 @@ export default async function LoginPage({
         <OAuthDivider />
       </CardContent>
 
-      <form action={login}>
-        <CardContent className="space-y-4 pt-0">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="vous@exemple.com"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-primary hover:underline"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full">
-            Se connecter
-          </Button>
-          <p className="text-sm text-center text-muted-foreground">
-            Pas encore de compte ?{' '}
-            <Link href="/register" className="text-primary hover:underline font-medium">
-              Créer un compte
-            </Link>
-          </p>
-        </CardFooter>
-      </form>
+      <LoginForm />
     </Card>
   )
 }
