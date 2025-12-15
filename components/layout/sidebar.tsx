@@ -39,7 +39,10 @@ export default function Sidebar({ profile }: SidebarProps) {
     >
       <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4 dark:border-gray-800 dark:bg-gray-950">
         {/* Logo / Header */}
-        <div className="flex h-16 shrink-0 items-center justify-between">
+        <div className={cn(
+          "flex h-16 shrink-0 items-center",
+          isCollapsed ? "flex-col justify-center gap-2 pt-2" : "justify-between"
+        )}>
           {!isCollapsed ? (
             <Link href="/dashboard" className="flex items-center gap-2">
               <Image
@@ -51,18 +54,21 @@ export default function Sidebar({ profile }: SidebarProps) {
               <h1 className="text-xl font-bold text-primary">E-Voting Platform</h1>
             </Link>
           ) : (
-            <Link href="/dashboard" className="flex items-center justify-center w-full">
+            <Link href="/dashboard" className="flex items-center justify-center">
               <Image
                 src="/logo-removebg.png"
                 alt="E-Voting Platform"
-                width={32}
-                height={32}
+                width={40}
+                height={40}
               />
             </Link>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-md hover:bg-muted transition-colors"
+            className={cn(
+              "p-1.5 rounded-md hover:bg-muted transition-colors",
+              isCollapsed && "mt-1"
+            )}
             aria-label={isCollapsed ? "Agrandir la navigation" : "Minimiser la navigation"}
             title={isCollapsed ? "Agrandir" : "Minimiser"}
           >
